@@ -1,12 +1,26 @@
 <?php
-$host = "192.168.88.177";
+
+$host = "34.123.456.789";
+$porta = "5432";
+$banco = "atletica";
 $usuario = "hugoapp";
-$senha = "@appHugo2";
-$banco = "hugodb";
+$senha = "SUA_SENHA";
 
-$conn = new mysqli($host, $usuario, $senha, $banco);
+try {
 
-if ($conn->connect_error) {
-    die("Erro: " . $conn->connect_error);
+    $conn = new PDO(
+        "pgsql:host=$host;port=$porta;dbname=$banco",
+        $usuario,
+        $senha,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]
+    );
+
+} catch (PDOException $e) {
+
+    die("Erro na conexão: " . $e->getMessage());
+
 }
 ?>
