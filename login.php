@@ -194,83 +194,120 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="auth-card">
-            <h2>Login</h2>
-             <form method="POST" action="login.php">
 
-    <input
-        type="hidden"
-        name="acao"
-        value="login"
-    >
+    <h2>Login</h2>
 
-    <input
-        type="email"
-        name="email"
-        placeholder="E-mail"
-        required
-    >
+    <p class="subtitle">
+        Entre na sua conta StrikeSet
+    </p>
 
-    <input
-        type="password"
-        name="senha"
-        placeholder="Senha"
-        required
-    >
+    <form class="auth-form" method="POST" action="login.php">
 
-    <button type="submit">
-        Entrar
-    </button>
+        <input
+            type="hidden"
+            name="acao"
+            value="login"
+        >
 
-</form>
-            <div class="text-small">
-                <a href="#">Esqueceu a senha?</a>
-            </div>
+        <div class="form-group">
+            <label for="login-email">E-mail</label>
+
+            <input
+                type="email"
+                id="login-email"
+                name="email"
+                placeholder="seu@email.com"
+                required
+            >
         </div>
 
-        <div class="auth-divider">
-            <span>ou</span>
+        <div class="form-group">
+            <label for="login-senha">Senha</label>
+
+            <input
+                type="password"
+                id="login-senha"
+                name="senha"
+                placeholder="Digite sua senha"
+                required
+            >
         </div>
 
-        <div class="auth-card">
-            <h2>Cadastro</h2>
-	   <form method="POST" action="login.php">
+        <button type="submit" class="btn-auth">
+            Entrar
+        </button>
 
-    <input
-        type="hidden"
-        name="acao"
-        value="cadastro"
-    >
+    </form>
 
-    <input
-        type="text"
-        name="nome"
-        placeholder="Nome"
-        required
-    >
+    <div class="text-small">
+        <a href="#">Esqueceu a senha?</a>
+    </div>
 
-    <input
-        type="email"
-        name="email"
-        placeholder="E-mail"
-        required
-    >
+</div>
 
-    <input
-        type="password"
-        name="senha"
-        placeholder="Senha"
-        required
-    >
+<div class="auth-card">
 
-    <button type="submit">
-        Cadastrar
-    </button>
+    <h2>Cadastro</h2>
 
-</form>
-             <div class="text-small">
-                Ao se cadastrar, você concorda com nossos <a href="#">termos</a>.
-            </div>
+    <p class="subtitle">
+        Faça parte da comunidade StrikeSet
+    </p>
+
+    <form class="auth-form" method="POST" action="login.php">
+
+        <input
+            type="hidden"
+            name="acao"
+            value="cadastro"
+        >
+
+        <div class="form-group">
+            <label for="cadastro-nome">Nome</label>
+
+            <input
+                type="text"
+                id="cadastro-nome"
+                name="nome"
+                placeholder="Digite seu nome"
+                required
+            >
         </div>
+
+        <div class="form-group">
+            <label for="cadastro-email">E-mail</label>
+
+            <input
+                type="email"
+                id="cadastro-email"
+                name="email"
+                placeholder="seu@email.com"
+                required
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="cadastro-senha">Senha</label>
+
+            <input
+                type="password"
+                id="cadastro-senha"
+                name="senha"
+                placeholder="Crie uma senha"
+                required
+            >
+        </div>
+
+        <button type="submit" class="btn-auth">
+            Cadastrar
+        </button>
+
+    </form>
+
+    <div class="text-small">
+        Ao se cadastrar, você concorda com nossos
+        <a href="#">termos</a>.
+    </div>
+</div>
     </main>
 
     <?php require_once __DIR__ . '/includes/footer.php'; ?>

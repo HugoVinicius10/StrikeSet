@@ -3,7 +3,31 @@
 require_once __DIR__ . '/includes/auth_admin.php';
 require_once __DIR__ . '/conexao.php';
 
+/*
+|--------------------------------------------------------------------------
+| Valores iniciais da página
+|--------------------------------------------------------------------------
+*/
 
+$mensagem = '';
+$editando = null;
+$treinos = [];
+
+$dias = [
+    'SEG' => 'Segunda-feira',
+    'TER' => 'Terça-feira',
+    'QUA' => 'Quarta-feira',
+    'QUI' => 'Quinta-feira',
+    'SEX' => 'Sexta-feira',
+    'SAB' => 'Sábado'
+];
+
+$niveis = [
+    'iniciante' => 'Iniciante',
+    'intermediario' => 'Intermediário',
+    'avancado' => 'Avançado',
+    'todos' => 'Todos'
+];
 // CREATE
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'salvar') {
 
@@ -79,10 +103,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'editar'
 }
 
 
-// DELETE
-if (isset($_GET['excluir'])) {
+// ── Excluir treino ──────────────────────────────────────
 
-    $id = (int) $_GET['excluir'];
+if (
+    isset($_GET['action'], $_GET['id']) &&
+    $_GET['action'] === 'delete'
+) {
+
+    $id = (int) $_GET['id'];
 
     $stmt = $conn->prepare("
         DELETE FROM treinos
@@ -97,12 +125,14 @@ if (isset($_GET['excluir'])) {
 }
 
 
-// CARREGAR UM REGISTRO PARA EDIÇÃO
-$treinoEdicao = null;
+// ── Carregar treino para edição ─────────────────────────
 
-if (isset($_GET['editar'])) {
+if (
+    isset($_GET['action'], $_GET['id']) &&
+    $_GET['action'] === 'edit'
+) {
 
-    $id = (int) $_GET['editar'];
+    $id = (int) $_GET['id'];
 
     $stmt = $conn->prepare("
         SELECT *
@@ -113,7 +143,7 @@ if (isset($_GET['editar'])) {
     $stmt->bind_param("i", $id);
     $stmt->execute();
 
-    $treinoEdicao = $stmt
+    $editando = $stmt
         ->get_result()
         ->fetch_assoc();
 }
@@ -549,9 +579,12 @@ body {
     <!-- Barra de Ações -->
     <div class="actions-bar">
         <h2>Gerenciar Treinos</h2>
-        <a href="#form-treino" class="btn-admin btn-verde" onclick="abrirFormNovo()">
-            ＋ Novo Treino
-        </a>
+        <a
+    href="admin_treinos.php#form-treino"
+    class="btn-admin btn-laranja"
+>
+    ＋ Novo Treino
+</a>
     </div>
 
     <!-- ===== TABELA DE TREINOS ===== -->
@@ -594,23 +627,25 @@ body {
                         <?= htmlspecialchars($t['descricao']) ?>
                     </td>
                     <td>
-                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                            <!-- Botão Editar -->
-                            <a href="?action=edit&id=<?= $t['id'] ?>#form-treino"
-                               class="btn-admin btn-amarelo"
-                               style="padding:6px 12px;font-size:.8rem;"
-                               onclick="rolarParaForm()">
-                               ✏️ Editar
-                            </a>
-                            <!-- Botão Excluir -->
-                            <a href="?action=delete&id=<?= $t['id'] ?>"
-                               class="btn-admin btn-vermelho"
-                               style="padding:6px 12px;font-size:.8rem;"
-                               onclick="return confirmarExclusao('<?= htmlspecialchars($t['titulo'], ENT_QUOTES) ?>')">
-                               🗑️ Excluir
-                            </a>
-                        </div>
-                    </td>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+
+        <a
+            href="admin_treinos.php?action=edit&id=<?= (int) $t['id'] ?>#form-treino"
+            class="btn-admin btn-amarelo"
+        >
+            ✏️ Editar
+        </a>
+
+        <a
+            href="admin_treinos.php?action=delete&id=<?= (int) $t['id'] ?>"
+            class="btn-admin btn-vermelho"
+            onclick="return confirm('Tem certeza que deseja excluir este treino?')"
+        >
+            🗑️ Excluir
+        </a>
+
+    </div>
+</td>
                 </tr>
                 <?php endforeach; ?>
                 <?php endif; ?>
@@ -618,90 +653,211 @@ body {
         </table>
     </div>
 
-    <!-- ===== FORMULÁRIO CRIAR / EDITAR ===== -->
-    <div class="form-card" id="form-treino">
-        <h3>
-            <?= $editando ? '✏️ Editar Treino' : '➕ Novo Treino' ?>
-        </h3>
+<!-- ===== FORMULÁRIO CRIAR / EDITAR ===== -->
 
-        <form method="POST">
+<div class="form-card" id="form-treino">
 
-    <input
-        type="hidden"
-        name="id"
-        value="<?= $treinoEdicao['id'] ?? '' ?>"
-    >
+    <h3>
+        <?= $editando ? '✏️ Editar Treino' : '➕ Novo Treino' ?>
+    </h3>
+
+    <form method="POST" action="admin_treinos.php">
 
     <input
         type="hidden"
         name="acao"
-        value="<?= $treinoEdicao ? 'editar' : 'salvar' ?>"
+        value="<?= $editando ? 'editar' : 'salvar' ?>"
     >
 
-    <select name="dia" required>
-        <option value="SEG">SEG</option>
-        <option value="TER">TER</option>
-        <option value="QUA">QUA</option>
-        <option value="QUI">QUI</option>
-        <option value="SEX">SEX</option>
-        <option value="SAB">SAB</option>
-    </select>
+    <?php if ($editando): ?>
 
-    <input
-        type="text"
-        name="titulo"
-        placeholder="Título"
-        value="<?= htmlspecialchars($treinoEdicao['titulo'] ?? '') ?>"
-        required
-    >
+        <input
+            type="hidden"
+            name="id"
+            value="<?= (int) $editando['id'] ?>"
+        >
 
-    <input
-        type="text"
-        name="horario"
-        placeholder="Horário"
-        value="<?= htmlspecialchars($treinoEdicao['horario'] ?? '') ?>"
-        required
-    >
+    <?php endif; ?>
 
-    <textarea
-        name="descricao"
-        placeholder="Descrição"
-    ><?= htmlspecialchars($treinoEdicao['descricao'] ?? '') ?></textarea>
 
-    <select name="nivel">
-        <option value="iniciante">iniciante</option>
-        <option value="intermediario">intermediario</option>
-        <option value="avancado">avancado</option>
-        <option value="todos">todos</option>
-    </select>
+        <div class="form-grid">
 
-    <button type="submit">
-        <?= $treinoEdicao ? 'Atualizar' : 'Cadastrar' ?>
-    </button>
+            <!-- DIA -->
 
-</form>
+            <div class="field-group">
 
-<?php foreach ($treinos as $treino): ?>
+                <label for="dia">
+                    Dia <span class="req">*</span>
+                </label>
 
-    <p>
-        <?= $treino['id'] ?> |
-        <?= htmlspecialchars($treino['dia']) ?> |
-        <?= htmlspecialchars($treino['titulo']) ?> |
-        <?= htmlspecialchars($treino['horario']) ?> |
-        <?= htmlspecialchars($treino['nivel']) ?>
+                <select
+                    id="dia"
+                    name="dia"
+                    required
+                >
 
-        <a href="?editar=<?= $treino['id'] ?>">
-            Editar
-        </a>
+                    <option value="">
+                        Selecione...
+                    </option>
 
-        <a href="?excluir=<?= $treino['id'] ?>">
-            Excluir
-        </a>
-    </p>
+                    <?php foreach ($dias as $val => $label): ?>
 
-<?php endforeach; ?>
+                        <option
+                            value="<?= $val ?>"
+                            <?= (
+                                $editando &&
+                                $editando['dia'] === $val
+                            ) ? 'selected' : '' ?>
+                        >
 
-    </div><!-- /form-card -->
+                            <?= $val ?> – <?= $label ?>
+
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+
+            </div>
+
+
+            <!-- TÍTULO -->
+
+            <div class="field-group">
+
+                <label for="titulo">
+                    Título <span class="req">*</span>
+                </label>
+
+                <input
+                    type="text"
+                    id="titulo"
+                    name="titulo"
+                    maxlength="100"
+                    placeholder="Ex: Treino de fundamentos"
+                    value="<?= htmlspecialchars($editando['titulo'] ?? '') ?>"
+                    required
+                >
+
+            </div>
+
+
+            <!-- HORÁRIO -->
+
+            <div class="field-group">
+
+                <label for="horario">
+                    Horário <span class="req">*</span>
+                </label>
+
+                <input
+                    type="text"
+                    id="horario"
+                    name="horario"
+                    maxlength="30"
+                    placeholder="Ex: 19h00 - 21h00"
+                    value="<?= htmlspecialchars($editando['horario'] ?? '') ?>"
+                    required
+                >
+
+            </div>
+
+
+            <!-- NÍVEL -->
+
+            <div class="field-group">
+
+                <label for="nivel">
+                    Nível <span class="req">*</span>
+                </label>
+
+                <select
+                    id="nivel"
+                    name="nivel"
+                    required
+                >
+
+                    <option value="">
+                        Selecione...
+                    </option>
+
+                    <?php foreach ($niveis as $val => $label): ?>
+
+                        <option
+                            value="<?= $val ?>"
+                            <?= (
+                                $editando &&
+                                $editando['nivel'] === $val
+                            ) ? 'selected' : '' ?>
+                        >
+
+                            <?= $label ?>
+
+                        </option>
+
+                    <?php endforeach; ?>
+
+                </select>
+
+            </div>
+
+
+            <!-- DESCRIÇÃO -->
+
+            <div class="field-group form-grid-full">
+
+                <label for="descricao">
+                    Descrição
+                </label>
+
+                <textarea
+                    id="descricao"
+                    name="descricao"
+                    maxlength="500"
+                    placeholder="Descreva o conteúdo do treino..."
+                ><?= htmlspecialchars($editando['descricao'] ?? '') ?></textarea>
+
+            </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <?php if ($editando): ?>
+
+                <button
+                    type="submit"
+                    class="btn-admin btn-laranja"
+                >
+                    💾 Salvar Alterações
+                </button>
+
+                <a
+                    href="admin_treinos.php"
+                    class="btn-admin btn-cinza"
+                >
+                    ✕ Cancelar
+                </a>
+
+            <?php else: ?>
+
+                <button
+                    type="submit"
+                    class="btn-admin btn-laranja"
+                >
+                    ✚ Criar Treino
+                </button>
+
+            <?php endif; ?>
+
+        </div>
+
+    </form>
+
+</div>
+
+</div><!-- /form-card -->
 
 </main>
 
