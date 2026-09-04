@@ -1,185 +1,148 @@
 <?php
-// ===================================================
-// ADMIN_TREINOS.PHP - Painel Administrativo de Treinos
-// StrikeSet Gaspar
-// ===================================================
 
-session_start();
+require_once __DIR__ . '/includes/auth_admin.php';
+require_once __DIR__ . '/conexao.php';
 
-require_once 'conexao.php';
 
-// Bloqueia usuários não-admin
-if (
-    !isset($_SESSION['usuario_id']) ||
-    !isset($_SESSION['tipo']) ||
-    $_SESSION['tipo'] !== 'admin'
-) {
-    header("Location: home.php");
-    exit();
+// CREATE
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'salvar') {
+
+    $dia = $_POST['dia'] ?? '';
+    $titulo = trim($_POST['titulo'] ?? '');
+    $horario = trim($_POST['horario'] ?? '');
+    $descricao = trim($_POST['descricao'] ?? '');
+    $nivel = $_POST['nivel'] ?? 'todos';
+
+    $stmt = $conn->prepare("
+        INSERT INTO treinos (
+            dia,
+            titulo,
+            horario,
+            descricao,
+            nivel
+        )
+        VALUES (?, ?, ?, ?, ?)
+    ");
+
+    $stmt->bind_param(
+        "sssss",
+        $dia,
+        $titulo,
+        $horario,
+        $descricao,
+        $nivel
+    );
+
+    $stmt->execute();
+
+    header('Location: admin_treinos.php');
+    exit;
 }
 
-// ── Mensagem de feedback ────────────────────────────
-$mensagem = '';
-$tipo_msg = '';
 
-// ── EXCLUIR ─────────────────────────────────────────
-if (
-    isset($_GET['action']) &&
-    $_GET['action'] === 'delete' &&
-    isset($_GET['id'])
-) {
+// UPDATE
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'editar') {
 
-    $id = (int) $_GET['id'];
+    $id = (int) ($_POST['id'] ?? 0);
 
-    $stmt = $conn->prepare("DELETE FROM treinos WHERE id = ?");
-    $stmt->bind_param("i", $id);
+    $dia = $_POST['dia'] ?? '';
+    $titulo = trim($_POST['titulo'] ?? '');
+    $horario = trim($_POST['horario'] ?? '');
+    $descricao = trim($_POST['descricao'] ?? '');
+    $nivel = $_POST['nivel'] ?? 'todos';
 
-    if ($stmt->execute()) {
-        $mensagem = 'Treino excluído com sucesso!';
-        $tipo_msg = 'success';
-    } else {
-        $mensagem = 'Erro ao excluir treino.';
-        $tipo_msg = 'danger';
-    }
+    $stmt = $conn->prepare("
+        UPDATE treinos
+        SET
+            dia = ?,
+            titulo = ?,
+            horario = ?,
+            descricao = ?,
+            nivel = ?
+        WHERE id = ?
+    ");
 
-    $stmt->close();
+    $stmt->bind_param(
+        "sssssi",
+        $dia,
+        $titulo,
+        $horario,
+        $descricao,
+        $nivel,
+        $id
+    );
+
+    $stmt->execute();
+
+    header('Location: admin_treinos.php');
+    exit;
 }
 
-// ── INSERIR / ATUALIZAR ─────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $id         = isset($_POST['id']) ? (int) $_POST['id'] : 0;
-    $dia        = trim($_POST['dia'] ?? '');
-    $titulo     = trim($_POST['titulo'] ?? '');
-    $horario    = trim($_POST['horario'] ?? '');
-    $descricao  = trim($_POST['descricao'] ?? '');
-    $nivel      = trim($_POST['nivel'] ?? '');
+// DELETE
+if (isset($_GET['excluir'])) {
 
-    if ($dia && $titulo && $horario && $nivel) {
+    $id = (int) $_GET['excluir'];
 
-        // UPDATE
-        if ($id > 0) {
+    $stmt = $conn->prepare("
+        DELETE FROM treinos
+        WHERE id = ?
+    ");
 
-            $stmt = $conn->prepare("
-                UPDATE treinos
-                SET dia=?, titulo=?, horario=?, descricao=?, nivel=?
-                WHERE id=?
-            ");
-
-            $stmt->bind_param(
-                "sssssi",
-                $dia,
-                $titulo,
-                $horario,
-                $descricao,
-                $nivel,
-                $id
-            );
-
-            if ($stmt->execute()) {
-                $mensagem = 'Treino atualizado com sucesso!';
-                $tipo_msg = 'success';
-            } else {
-                $mensagem = 'Erro ao atualizar treino.';
-                $tipo_msg = 'danger';
-            }
-
-            $stmt->close();
-
-        } else {
-
-            // INSERT
-            $stmt = $conn->prepare("
-                INSERT INTO treinos
-                (dia, titulo, horario, descricao, nivel)
-                VALUES (?, ?, ?, ?, ?)
-            ");
-
-            $stmt->bind_param(
-                "sssss",
-                $dia,
-                $titulo,
-                $horario,
-                $descricao,
-                $nivel
-            );
-
-            if ($stmt->execute()) {
-                $mensagem = 'Treino criado com sucesso!';
-                $tipo_msg = 'success';
-            } else {
-                $mensagem = 'Erro ao criar treino.';
-                $tipo_msg = 'danger';
-            }
-
-            $stmt->close();
-        }
-
-    } else {
-
-        $mensagem = 'Preencha todos os campos obrigatórios.';
-        $tipo_msg = 'danger';
-    }
-}
-
-// ── Carregar treino para edição ─────────────────────
-$editando = null;
-
-if (
-    isset($_GET['action']) &&
-    $_GET['action'] === 'edit' &&
-    isset($_GET['id'])
-) {
-
-    $id = (int) $_GET['id'];
-
-    $stmt = $conn->prepare("SELECT * FROM treinos WHERE id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
 
-    $resultado = $stmt->get_result();
-
-    if ($resultado->num_rows > 0) {
-        $editando = $resultado->fetch_assoc();
-    }
-
-    $stmt->close();
+    header('Location: admin_treinos.php');
+    exit;
 }
 
-// ── Listar todos os treinos ─────────────────────────
-$treinos = [];
 
-$sql = '
+// CARREGAR UM REGISTRO PARA EDIÇÃO
+$treinoEdicao = null;
+
+if (isset($_GET['editar'])) {
+
+    $id = (int) $_GET['editar'];
+
+    $stmt = $conn->prepare("
+        SELECT *
+        FROM treinos
+        WHERE id = ?
+    ");
+
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
+    $treinoEdicao = $stmt
+        ->get_result()
+        ->fetch_assoc();
+}
+
+
+// READ / LISTAGEM
+$sql = "
     SELECT *
     FROM treinos
-    ORDER BY FIELD(dia,"SEG","TER","QUA","QUI","SEX","SAB"), id
-';
+    ORDER BY
+        FIELD(
+            dia,
+            'SEG',
+            'TER',
+            'QUA',
+            'QUI',
+            'SEX',
+            'SAB'
+        ),
+        horario
+";
 
 $resultado = $conn->query($sql);
 
-if ($resultado && $resultado->num_rows > 0) {
+$treinos = [];
 
-    while ($row = $resultado->fetch_assoc()) {
-        $treinos[] = $row;
-    }
+while ($row = $resultado->fetch_assoc()) {
+    $treinos[] = $row;
 }
-
-// ── Opções de Nível ─────────────────────────────────
-$niveis = [
-    'iniciante'     => 'Iniciante',
-    'intermediario' => 'Intermediário',
-    'avancado'      => 'Avançado',
-    'todos'         => 'Todos os Níveis'
-];
-
-$dias = [
-    'SEG' => 'Segunda',
-    'TER' => 'Terça',
-    'QUA' => 'Quarta',
-    'QUI' => 'Quinta',
-    'SEX' => 'Sexta',
-    'SAB' => 'Sábado'
-];
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -661,78 +624,83 @@ body {
             <?= $editando ? '✏️ Editar Treino' : '➕ Novo Treino' ?>
         </h3>
 
-        <form method="POST" action="admin_treinos.php" novalidate>
+        <form method="POST">
 
-            <!-- ID oculto para UPDATE -->
-            <?php if ($editando): ?>
-                <input type="hidden" name="id" value="<?= $editando['id'] ?>">
-            <?php endif; ?>
+    <input
+        type="hidden"
+        name="id"
+        value="<?= $treinoEdicao['id'] ?? '' ?>"
+    >
 
-            <div class="form-grid">
+    <input
+        type="hidden"
+        name="acao"
+        value="<?= $treinoEdicao ? 'editar' : 'salvar' ?>"
+    >
 
-                <!-- Dia -->
-                <div class="field-group">
-                    <label for="dia">Dia <span class="req">*</span></label>
-                    <select id="dia" name="dia" required>
-                        <option value="">Selecione...</option>
-                        <?php foreach ($dias as $val => $label): ?>
-                            <option value="<?= $val ?>"
-                                <?= ($editando && $editando['dia'] === $val) ? 'selected' : '' ?>>
-                                <?= $val ?> – <?= $label ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+    <select name="dia" required>
+        <option value="SEG">SEG</option>
+        <option value="TER">TER</option>
+        <option value="QUA">QUA</option>
+        <option value="QUI">QUI</option>
+        <option value="SEX">SEX</option>
+        <option value="SAB">SAB</option>
+    </select>
 
-                <!-- Título -->
-                <div class="field-group">
-                    <label for="titulo">Título <span class="req">*</span></label>
-                    <input type="text" id="titulo" name="titulo" maxlength="100" required
-                           placeholder="Ex: Fundamentos"
-                           value="<?= htmlspecialchars($editando['titulo'] ?? '') ?>">
-                </div>
+    <input
+        type="text"
+        name="titulo"
+        placeholder="Título"
+        value="<?= htmlspecialchars($treinoEdicao['titulo'] ?? '') ?>"
+        required
+    >
 
-                <!-- Horário -->
-                <div class="field-group">
-                    <label for="horario">Horário <span class="req">*</span></label>
-                    <input type="text" id="horario" name="horario" maxlength="30" required
-                           placeholder="Ex: 19h00 - 21h00"
-                           value="<?= htmlspecialchars($editando['horario'] ?? '') ?>">
-                </div>
+    <input
+        type="text"
+        name="horario"
+        placeholder="Horário"
+        value="<?= htmlspecialchars($treinoEdicao['horario'] ?? '') ?>"
+        required
+    >
 
-                <!-- Nível -->
-                <div class="field-group">
-                    <label for="nivel">Nível <span class="req">*</span></label>
-                    <select id="nivel" name="nivel" required>
-                        <option value="">Selecione...</option>
-                        <?php foreach ($niveis as $val => $label): ?>
-                            <option value="<?= $val ?>"
-                                <?= ($editando && $editando['nivel'] === $val) ? 'selected' : '' ?>>
-                                <?= $label ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+    <textarea
+        name="descricao"
+        placeholder="Descrição"
+    ><?= htmlspecialchars($treinoEdicao['descricao'] ?? '') ?></textarea>
 
-                <!-- Descrição (linha inteira) -->
-                <div class="field-group form-grid-full">
-                    <label for="descricao">Descrição</label>
-                    <textarea id="descricao" name="descricao" maxlength="500"
-                              placeholder="Descreva o conteúdo do treino..."><?= htmlspecialchars($editando['descricao'] ?? '') ?></textarea>
-                </div>
+    <select name="nivel">
+        <option value="iniciante">iniciante</option>
+        <option value="intermediario">intermediario</option>
+        <option value="avancado">avancado</option>
+        <option value="todos">todos</option>
+    </select>
 
-            </div><!-- /form-grid -->
+    <button type="submit">
+        <?= $treinoEdicao ? 'Atualizar' : 'Cadastrar' ?>
+    </button>
 
-            <div class="form-actions">
-                <?php if ($editando): ?>
-                    <button type="submit" class="btn-admin btn-laranja">💾 Salvar Alterações</button>
-                    <a href="admin_treinos.php" class="btn-admin btn-cinza">✕ Cancelar</a>
-                <?php else: ?>
-                    <button type="submit" class="btn-admin btn-verde">✚ Criar Treino</button>
-                <?php endif; ?>
-            </div>
+</form>
 
-        </form>
+<?php foreach ($treinos as $treino): ?>
+
+    <p>
+        <?= $treino['id'] ?> |
+        <?= htmlspecialchars($treino['dia']) ?> |
+        <?= htmlspecialchars($treino['titulo']) ?> |
+        <?= htmlspecialchars($treino['horario']) ?> |
+        <?= htmlspecialchars($treino['nivel']) ?>
+
+        <a href="?editar=<?= $treino['id'] ?>">
+            Editar
+        </a>
+
+        <a href="?excluir=<?= $treino['id'] ?>">
+            Excluir
+        </a>
+    </p>
+
+<?php endforeach; ?>
+
     </div><!-- /form-card -->
 
 </main>

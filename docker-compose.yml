@@ -1,0 +1,16 @@
+services:
+
+  web:
+    build: .
+    container_name: strikeset
+
+    ports:
+      - "8080:80"
+
+    volumes:
+      - .:/var/www/html
+
+    env_file:
+      - .env
+
+    restart: unless-stopped

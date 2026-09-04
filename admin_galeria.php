@@ -1,22 +1,8 @@
 <?php
-// ===================================================
-// ADMIN_GALERIA.PHP - Painel Administrativo de Treinos
-// StrikeSet Gaspar
-// ===================================================
 
-session_start();
+require_once __DIR__ . '/includes/auth_admin.php';
+require_once __DIR__ . '/conexao.php';
 
-require_once 'conexao.php';
-
-// Bloqueia usuários não-admin
-if (
-    !isset($_SESSION['usuario_id']) ||
-    !isset($_SESSION['tipo']) ||
-    $_SESSION['tipo'] !== 'admin'
-) {
-    header("Location: home.php");
-    exit();
-}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -35,20 +21,7 @@ if (
 
 <body class="pagina-admin">
 
-<header>
-    <h2>StrikeSet Gaspar</h2>
-
-    <nav>
-        <a href="home.php">Inicio</a>
-        <a href="admin_galeria.php">Galeria</a>
-        <a href="sobre.php">Sobre</a>
-        <a href="admin_treinos.php">Treinos</a>
-        <a href="campeonatos.php">Campeonatos</a>
-
-        <span class="admin-badge">PAINEL ADMIN</span>
-
-    </nav>
-</header>
+<?php require_once __DIR__ . '/includes/header.php'; ?>
 
 <section class="admin-hero">
     <div class="admin-hero-inner">
@@ -553,19 +526,8 @@ Preparação da equipe para o campeonato regional.
     </div>
 </div>
 </section>
-<footer>
 
-    <p>StrikeSet Gaspar</p>
-
-    <div>
-        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/instagram.svg" alt="Instagram">
-
-        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/x.svg" alt="Twitter">
-
-        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/whatsapp.svg" alt="WhatsApp">
-    </div>
-
-</footer>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
