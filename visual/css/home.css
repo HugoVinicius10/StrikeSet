@@ -1,0 +1,59 @@
+.pagina-home{
+display:flex;
+flex-direction:column;
+min-height:100vh;
+}
+
+.hero{
+flex:1;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:80px;
+padding:60px 40px;
+}
+
+.hero-img img{
+width:400px;
+animation:flutuar 3s ease-in-out infinite;
+display:block;
+background:transparent;
+}
+
+.hero-img{
+overflow:visible;
+}
+
+.hero-text{
+max-width:450px;
+background:var(--cinza-escuro);
+padding:40px;
+border-radius:12px;
+border:1px solid var(--cinza-medio);
+}
+
+.hero-text p{
+font-size:1.1rem;
+margin-bottom:20px;
+line-height:1.6;
+color:var(--cinza-claro);
+}
+
+.hero-text button{
+background:var(--laranja);
+color:white;
+border:none;
+padding:14px;
+width:100%;
+border-radius:8px;
+font-weight:600;
+font-size:1rem;
+cursor:pointer;
+transition:0.3s;
+margin-top:10px;
+}
+
+.hero-text button:hover{
+background:var(--laranja-escuro);
+transform:translateY(-2px);
+}

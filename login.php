@@ -1,6 +1,8 @@
 <?php
 
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 
 require_once __DIR__ . '/conexao.php';
 
@@ -164,18 +166,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StrikeSet Gaspar - Login/Cadastro</title>
-    <link rel="stylesheet" href="global.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="login.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="visual/css/global.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="visual/css/login.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
     <?php require_once __DIR__ . '/includes/header.php'; ?>
+
     <main class="auth-container">
 
       <?php if ($erro): ?>
@@ -190,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php endif; ?>
       
         <div class="hero-img">
-            <img src="jogador.png" alt="Jogadora de vôlei">
+            <img src="visual/images/jogador.png" alt="Jogadora de vôlei">
         </div>
 
         <div class="auth-card">

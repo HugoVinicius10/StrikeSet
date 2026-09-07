@@ -1,0 +1,346 @@
+/* ===== TREINOS - ESTILOS ESPECIFICOS ===== */
+
+/* Secao Principal */
+.treinos-section {
+    flex: 1;
+    padding: 60px 40px 80px;
+}
+
+/* Cabecalho */
+.treinos-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.treinos-header h1 {
+    color: var(--laranja);
+    font-size: 3.5rem;
+    font-style: italic;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.treinos-header p {
+    color: var(--cinza-texto);
+    font-size: 1.1rem;
+    max-width: 700px;
+    margin: 0 auto 25px;
+    line-height: 1.6;
+}
+
+.local-info {
+    display: inline-block;
+    background: var(--cinza-escuro);
+    border: 1px solid var(--laranja);
+    color: var(--laranja);
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+/* Titulo de Secao */
+.section-title {
+    text-align: center;
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 40px;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.section-title::after {
+    content: "";
+    display: block;
+    width: 80px;
+    height: 4px;
+    background: var(--laranja);
+    margin: 15px auto 0;
+    border-radius: 2px;
+}
+
+/* Grid do Cronograma */
+.cronograma-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    max-width: 1400px;
+    margin: 0 auto 80px;
+}
+
+/* Card de Treino */
+.treino-card {
+    background: var(--cinza-escuro);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: 0.3s;
+    cursor: pointer;
+    animation: fadeIn 0.5s ease-out both;
+    border-top: 4px solid var(--laranja);
+}
+
+.treino-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(249, 115, 22, 0.25);
+}
+
+.dia-tag {
+    background: var(--laranja);
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 10px 20px;
+    display: inline-block;
+    border-bottom-right-radius: 14px;
+    letter-spacing: 2px;
+}
+
+.treino-card-body {
+    padding: 22px;
+}
+
+.treino-card-body h5 {
+    color: var(--laranja);
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+    font-weight: bold;
+}
+
+.treino-card-body .horario {
+    color: white;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.treino-card-body .descricao {
+    color: var(--cinza-texto);
+    font-size: 0.95rem;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+/* Tags de Nivel */
+.nivel {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.nivel.iniciante {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border: 1px solid #22c55e;
+}
+
+.nivel.intermediario {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 1px solid #3b82f6;
+}
+
+.nivel.avancado {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid #ef4444;
+}
+
+.nivel.todos {
+    background: rgba(249, 115, 22, 0.2);
+    color: var(--laranja);
+    border: 1px solid var(--laranja);
+}
+
+/* Animacao escalonada dos cards */
+.treino-card:nth-child(1) { animation-delay: 0.05s; }
+.treino-card:nth-child(2) { animation-delay: 0.1s; }
+.treino-card:nth-child(3) { animation-delay: 0.15s; }
+.treino-card:nth-child(4) { animation-delay: 0.2s; }
+.treino-card:nth-child(5) { animation-delay: 0.25s; }
+.treino-card:nth-child(6) { animation-delay: 0.3s; }
+
+/* ===== FORMULARIO DE INSCRICAO ===== */
+.inscricao-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.inscricao-card {
+    background: var(--cinza-escuro);
+    border-radius: 14px;
+    padding: 50px 40px;
+    border-top: 4px solid var(--laranja);
+    animation: fadeIn 0.6s ease-out both;
+}
+
+.inscricao-card h2 {
+    color: var(--laranja);
+    font-size: 2.2rem;
+    text-align: center;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+.inscricao-sub {
+    text-align: center;
+    color: var(--cinza-texto);
+    margin-bottom: 35px;
+    font-size: 1rem;
+}
+
+.inscricao-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    color: white;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    background: var(--preto-claro);
+    border: 1px solid var(--cinza-medio);
+    color: white;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: 0.3s;
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--laranja);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-group select option {
+    background: var(--preto-claro);
+    color: white;
+}
+
+.btn-inscrever {
+    background: var(--laranja);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 10px;
+}
+
+.btn-inscrever:hover {
+    background: var(--laranja-escuro);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(249, 115, 22, 0.3);
+}
+
+/* Feedback do formulario */
+.form-feedback {
+    text-align: center;
+    margin-top: 10px;
+    font-weight: 500;
+    min-height: 24px;
+}
+
+.form-feedback.erro {
+    color: #ef4444;
+}
+
+.form-feedback.sucesso {
+    color: #22c55e;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 992px) {
+    .treinos-header h1 {
+        font-size: 2.8rem;
+    }
+
+    .inscricao-card {
+        padding: 40px 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .treinos-section {
+        padding: 40px 20px 60px;
+    }
+
+    .treinos-header h1 {
+        font-size: 2.3rem;
+    }
+
+    .treinos-header p {
+        font-size: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.6rem;
+    }
+
+    .cronograma-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .inscricao-card {
+        padding: 30px 20px;
+    }
+
+    .inscricao-card h2 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .treinos-header h1 {
+        font-size: 1.9rem;
+    }
+
+    .btn-inscrever {
+        font-size: 1rem;
+        padding: 13px 20px;
+    }
+}
+header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}

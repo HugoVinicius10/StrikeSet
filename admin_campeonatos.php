@@ -3,6 +3,294 @@
 require_once __DIR__ . '/includes/auth_admin.php';
 require_once __DIR__ . '/conexao.php';
 
+$mensagem = '';
+$tipoMensagem = 'success';
+$editando = null;
+
+
+/*
+|--------------------------------------------------------------------------
+| CREATE / UPDATE / DELETE
+|--------------------------------------------------------------------------
+*/
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $acao = $_POST['acao'] ?? '';
+
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE
+    |--------------------------------------------------------------------------
+    */
+
+    if ($acao === 'excluir') {
+
+        $id = (int) ($_POST['id'] ?? 0);
+
+        if ($id > 0) {
+
+            $stmt = $conn->prepare("
+                DELETE FROM campeonatos
+                WHERE id = ?
+            ");
+
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+
+            header('Location: admin_campeonatos.php?msg=excluido');
+            exit;
+        }
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE / UPDATE
+    |--------------------------------------------------------------------------
+    */
+
+    if ($acao === 'salvar' || $acao === 'editar') {
+
+        $id = (int) ($_POST['id'] ?? 0);
+
+        $nome = trim($_POST['nome'] ?? '');
+        $tipo = $_POST['tipo'] ?? '';
+
+        $status = trim($_POST['status'] ?? '');
+        $status = $status !== '' ? $status : null;
+
+        $local = trim($_POST['local'] ?? '');
+        $dataExibicao = trim($_POST['data_exibicao'] ?? '');
+
+        $ano = trim($_POST['ano'] ?? '');
+        $ano = $ano !== '' ? (int) $ano : null;
+
+        $colocacao = trim($_POST['colocacao'] ?? '');
+        $colocacao = $colocacao !== '' ? $colocacao : null;
+
+        $icone = trim($_POST['icone'] ?? '');
+        $icone = $icone !== '' ? $icone : null;
+
+        $descricao = trim($_POST['descricao'] ?? '');
+        $descricao = $descricao !== '' ? $descricao : null;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validação básica
+        |--------------------------------------------------------------------------
+        */
+
+        $tiposPermitidos = [
+            'proximo',
+            'disputado',
+            'conquista'
+        ];
+
+        if (
+            $nome === '' ||
+            !in_array($tipo, $tiposPermitidos, true)
+        ) {
+
+            $mensagem = 'Preencha o nome e selecione um tipo válido.';
+            $tipoMensagem = 'danger';
+
+        } else {
+
+            /*
+            |--------------------------------------------------------------------------
+            | CREATE
+            |--------------------------------------------------------------------------
+            */
+
+            if ($acao === 'salvar') {
+
+                $stmt = $conn->prepare("
+                    INSERT INTO campeonatos (
+                        nome,
+                        tipo,
+                        status,
+                        local,
+                        data_exibicao,
+                        ano,
+                        colocacao,
+                        icone,
+                        descricao
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+
+                $stmt->bind_param(
+                    "sssssisss",
+                    $nome,
+                    $tipo,
+                    $status,
+                    $local,
+                    $dataExibicao,
+                    $ano,
+                    $colocacao,
+                    $icone,
+                    $descricao
+                );
+
+                $stmt->execute();
+
+                header('Location: admin_campeonatos.php?msg=criado');
+                exit;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | UPDATE
+            |--------------------------------------------------------------------------
+            */
+
+            if ($acao === 'editar' && $id > 0) {
+
+                $stmt = $conn->prepare("
+                    UPDATE campeonatos
+                    SET
+                        nome = ?,
+                        tipo = ?,
+                        status = ?,
+                        local = ?,
+                        data_exibicao = ?,
+                        ano = ?,
+                        colocacao = ?,
+                        icone = ?,
+                        descricao = ?
+                    WHERE id = ?
+                ");
+
+                $stmt->bind_param(
+                    "sssssisssi",
+                    $nome,
+                    $tipo,
+                    $status,
+                    $local,
+                    $dataExibicao,
+                    $ano,
+                    $colocacao,
+                    $icone,
+                    $descricao,
+                    $id
+                );
+
+                $stmt->execute();
+
+                header('Location: admin_campeonatos.php?msg=editado');
+                exit;
+            }
+        }
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| EDITAR - busca registro
+|--------------------------------------------------------------------------
+*/
+
+if (isset($_GET['edit'])) {
+
+    $id = (int) $_GET['edit'];
+
+    $stmt = $conn->prepare("
+        SELECT *
+        FROM campeonatos
+        WHERE id = ?
+    ");
+
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
+    $editando = $stmt
+        ->get_result()
+        ->fetch_assoc();
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| READ - todos os campeonatos
+|--------------------------------------------------------------------------
+*/
+
+$resultado = $conn->query("
+    SELECT *
+    FROM campeonatos
+    ORDER BY
+        FIELD(
+            tipo,
+            'proximo',
+            'disputado',
+            'conquista'
+        ),
+        ano DESC,
+        id DESC
+");
+
+$proximos = [];
+$disputados = [];
+$conquistas = [];
+
+while ($camp = $resultado->fetch_assoc()) {
+
+    if ($camp['tipo'] === 'proximo') {
+        $proximos[] = $camp;
+    }
+
+    if ($camp['tipo'] === 'disputado') {
+        $disputados[] = $camp;
+    }
+
+    if ($camp['tipo'] === 'conquista') {
+        $conquistas[] = $camp;
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Feedback
+|--------------------------------------------------------------------------
+*/
+
+if (isset($_GET['msg'])) {
+
+    switch ($_GET['msg']) {
+
+        case 'criado':
+            $mensagem = 'Campeonato criado com sucesso!';
+            break;
+
+        case 'editado':
+            $mensagem = 'Campeonato atualizado com sucesso!';
+            break;
+
+        case 'excluido':
+            $mensagem = 'Campeonato excluído com sucesso!';
+            break;
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Auxiliares
+|--------------------------------------------------------------------------
+*/
+
+$statusLabels = [
+    'aberto' => 'Inscrições abertas',
+    'confirmado' => 'Confirmado',
+    'analise' => 'Em análise',
+    'finalizado' => 'Finalizado'
+];
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -14,14 +302,50 @@ require_once __DIR__ . '/conexao.php';
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<link rel="stylesheet" href="global.css?v=<?php echo time(); ?>">
-<link rel="stylesheet" href="admin_campeonatos.css?v=<?php echo time(); ?>">
+<?php if ($editando): ?>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const modalElement =
+        document.getElementById('modalEditarCampeonato');
+
+    const modal =
+        new bootstrap.Modal(modalElement);
+
+    modal.show();
+
+});
+
+</script>
+
+<?php endif; ?>
+
+<link rel="stylesheet" href="visual/css/global.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="visual/css/admin_campeonatos.css?v=<?php echo time(); ?>">
 
 </head>
 
 <body class="pagina-admin">
 
-<?php require_once __DIR__ . '/includes/header.php'; ?>
+<?php require_once __DIR__ . '/includes/header_admin.php'; ?>
+
+<?php if ($mensagem): ?>
+
+    <div
+        class="alert alert-<?= $tipoMensagem === 'danger' ? 'danger' : 'success' ?>"
+        style="
+            max-width:1200px;
+            margin:20px auto;
+        "
+    >
+
+        <?= htmlspecialchars($mensagem) ?>
+
+    </div>
+
+<?php endif; ?>
 
 <section class="admin-hero">
     <div class="admin-hero-inner">
@@ -46,32 +370,46 @@ require_once __DIR__ . '/conexao.php';
 </section>
 
 <section class="admin-stats">
-    <div class="admin-inner">
+    <div class="stat-card">
+    <strong>
+        <?= count($proximos) + count($disputados) + count($conquistas) ?>
+    </strong>
 
-        <div class="stats-grid">
+    <span>Campeonatos no total</span>
+</div>
 
-            <div class="stat-card">
-                <strong>8</strong>
-                <span>Campeonatos no total</span>
-            </div>
 
-            <div class="stat-card stat-card-destaque">
-                <strong>3</strong>
-                <span>Próximos campeonatos</span>
-            </div>
+<div class="stat-card stat-card-destaque">
 
-            <div class="stat-card">
-                <strong>5</strong>
-                <span>Campeonatos disputados</span>
-            </div>
+    <strong>
+        <?= count($proximos) ?>
+    </strong>
 
-            <div class="stat-card">
-                <strong>6</strong>
-                <span>Conquistas</span>
-            </div>
+    <span>Próximos campeonatos</span>
 
-        </div>
-    </div>
+</div>
+
+
+<div class="stat-card">
+
+    <strong>
+        <?= count($disputados) ?>
+    </strong>
+
+    <span>Campeonatos disputados</span>
+
+</div>
+
+
+<div class="stat-card">
+
+    <strong>
+        <?= count($conquistas) ?>
+    </strong>
+
+    <span>Conquistas</span>
+
+</div>
 </section>
 
 <section class="admin-conteudo">
@@ -112,149 +450,123 @@ require_once __DIR__ . '/conexao.php';
                     <span class="barra"></span>
                     <h2>Próximos campeonatos</h2>
                 </div>
-                <span class="admin-secao-contagem">4 cadastrados</span>
+                <span class="admin-secao-contagem">
+               <?= count($proximos) ?> cadastrados
+               </span>
             </div>
 
             <div class="admin-grid">
 
-                <div class="camp-admin-card">
+    <?php if (empty($proximos)): ?>
 
-                    <div class="camp-card-topo">
-                        <span class="camp-status status-aberto">Inscrições abertas</span>
+        <p>Nenhum campeonato futuro cadastrado.</p>
+
+    <?php else: ?>
+
+        <?php foreach ($proximos as $camp): ?>
+
+            <div class="camp-admin-card">
+
+                <div class="camp-card-topo">
+
+                    <?php if ($camp['status']): ?>
+
+                        <span
+                            class="camp-status status-<?= htmlspecialchars($camp['status']) ?>"
+                        >
+                            <?= htmlspecialchars(
+                                $statusLabels[$camp['status']]
+                                ?? $camp['status']
+                            ) ?>
+                        </span>
+
+                    <?php endif; ?>
+
+                </div>
+
+
+                <h3>
+                    <?= htmlspecialchars($camp['nome']) ?>
+                </h3>
+
+
+                <div class="camp-card-info">
+
+                    <div class="camp-info-item">
+
+                        <span class="info-label">
+                            Local
+                        </span>
+
+                        <span class="info-val">
+                            <?= htmlspecialchars($camp['local'] ?: '-') ?>
+                        </span>
+
                     </div>
 
-                    <h3>Campeonato IFSC</h3>
 
-                    <div class="camp-card-info">
-                        <div class="camp-info-item">
-                            <span class="info-label">Local</span>
-                            <span class="info-val">Ginásio IFSC Gaspar</span>
-                        </div>
-                        <div class="camp-info-item">
-                            <span class="info-label">Data</span>
-                            <span class="info-val">14 e 15 de junho de 2026</span>
-                        </div>
-                    </div>
+                    <div class="camp-info-item">
 
-                    <div class="admin-card-acoes">
-                        <button
-                            class="acao-btn acao-editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarCampeonato">
-                            Editar
-                        </button>
+                        <span class="info-label">
+                            Data
+                        </span>
 
-                        <button class="acao-btn acao-excluir">
-                            Excluir
-                        </button>
+                        <span class="info-val">
+                            <?= htmlspecialchars($camp['data_exibicao'] ?: '-') ?>
+                        </span>
+
                     </div>
 
                 </div>
 
-                <div class="camp-admin-card">
 
-                    <div class="camp-card-topo">
-                        <span class="camp-status status-confirmado">Confirmado</span>
-                    </div>
+                <div class="admin-card-acoes">
 
-                    <h3>Torneio Regional Universitário</h3>
+                    <a
+                        href="admin_campeonatos.php?edit=<?= $camp['id'] ?>"
+                        class="acao-btn acao-editar"
+                    >
+                        Editar
+                    </a>
 
-                    <div class="camp-card-info">
-                        <div class="camp-info-item">
-                            <span class="info-label">Local</span>
-                            <span class="info-val">Arena Blumenau</span>
-                        </div>
-                        <div class="camp-info-item">
-                            <span class="info-label">Data</span>
-                            <span class="info-val">5 de julho de 2026</span>
-                        </div>
-                    </div>
 
-                    <div class="admin-card-acoes">
+                    <form
+                        method="POST"
+                        onsubmit="return confirm('Excluir este campeonato?');"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="acao"
+                            value="excluir"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="id"
+                            value="<?= $camp['id'] ?>"
+                        >
+
                         <button
-                            class="acao-btn acao-editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarCampeonato">
-                            Editar
-                        </button>
-
-                        <button class="acao-btn acao-excluir">
+                            type="submit"
+                            class="acao-btn acao-excluir"
+                        >
                             Excluir
                         </button>
-                    </div>
 
-                </div>
-
-                <div class="camp-admin-card">
-
-                    <div class="camp-card-topo">
-                        <span class="camp-status status-analise">Em análise</span>
-                    </div>
-
-                    <h3>Jogos da Integração SC</h3>
-
-                    <div class="camp-card-info">
-                        <div class="camp-info-item">
-                            <span class="info-label">Local</span>
-                            <span class="info-val">Florianópolis</span>
-                        </div>
-                        <div class="camp-info-item">
-                            <span class="info-label">Data</span>
-                            <span class="info-val">Setembro de 2026</span>
-                        </div>
-                    </div>
-
-                    <div class="admin-card-acoes">
-                        <button
-                            class="acao-btn acao-editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarCampeonato">
-                            Editar
-                        </button>
-
-                        <button class="acao-btn acao-excluir">
-                            Excluir
-                        </button>
-                    </div>
-
-                </div>
-
-                <div class="camp-admin-card">
-
-                    <div class="camp-card-topo">
-                        <span class="camp-status status-aberto">Inscrições abertas</span>
-                    </div>
-
-                    <h3>Copa Universitária de Vôlei</h3>
-
-                    <div class="camp-card-info">
-                        <div class="camp-info-item">
-                            <span class="info-label">Local</span>
-                            <span class="info-val">Ginásio Central de Blumenau</span>
-                        </div>
-                        <div class="camp-info-item">
-                            <span class="info-label">Data</span>
-                            <span class="info-val">20 de agosto de 2026</span>
-                        </div>
-                    </div>
-
-                    <div class="admin-card-acoes">
-                        <button
-                            class="acao-btn acao-editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarCampeonato">
-                            Editar
-                        </button>
-
-                        <button class="acao-btn acao-excluir">
-                            Excluir
-                        </button>
-                    </div>
+                    </form>
 
                 </div>
 
             </div>
-        </div>
+
+        <?php endforeach; ?>
+
+    <?php endif; ?>
+
+</div>
+
+                
 
         <div class="admin-secao">
 
@@ -263,395 +575,665 @@ require_once __DIR__ . '/conexao.php';
                     <span class="barra"></span>
                     <h2>Campeonatos disputados</h2>
                 </div>
-                <span class="admin-secao-contagem">5 cadastrados</span>
+                <span class="admin-secao-contagem">
+              <?= count($disputados) ?> cadastrados
+               </span>
             </div>
 
             <div class="disputados-lista">
 
-                <div class="disp-admin-card">
-                    <div class="disp-ano">2026</div>
-                    <div class="disp-corpo">
-                        <div class="disp-info">
-                            <h3>Copa IFSC de Vôlei</h3>
-                            <span class="disp-coloc coloc-prata">2º lugar</span>
-                        </div>
-                        <div class="disp-acoes">
-                            <button
-                                class="acao-btn acao-editar"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalEditarCampeonato">
-                                Editar
-                            </button>
-                            <button class="acao-btn acao-excluir">Excluir</button>
-                        </div>
-                    </div>
+    <?php if (empty($disputados)): ?>
+
+        <p>Nenhum campeonato disputado cadastrado.</p>
+
+    <?php else: ?>
+
+        <?php foreach ($disputados as $camp): ?>
+
+            <div class="disp-admin-card">
+
+                <div class="disp-ano">
+                    <?= htmlspecialchars($camp['ano'] ?: '-') ?>
                 </div>
 
-                <div class="disp-admin-card">
-                    <div class="disp-ano">2025</div>
-                    <div class="disp-corpo">
-                        <div class="disp-info">
-                            <h3>Torneio Integração IFSC</h3>
-                            <span class="disp-coloc coloc-ouro">1º lugar</span>
-                        </div>
-                        <div class="disp-acoes">
-                            <button
-                                class="acao-btn acao-editar"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalEditarCampeonato">
-                                Editar
-                            </button>
-                            <button class="acao-btn acao-excluir">Excluir</button>
-                        </div>
-                    </div>
-                </div>
+                <div class="disp-corpo">
 
-                <div class="disp-admin-card">
-                    <div class="disp-ano">2025</div>
-                    <div class="disp-corpo">
-                        <div class="disp-info">
-                            <h3>Regional Universitário SC</h3>
-                            <span class="disp-coloc coloc-bronze">3º lugar</span>
-                        </div>
-                        <div class="disp-acoes">
-                            <button
-                                class="acao-btn acao-editar"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalEditarCampeonato">
-                                Editar
-                            </button>
-                            <button class="acao-btn acao-excluir">Excluir</button>
-                        </div>
-                    </div>
-                </div>
+                    <div class="disp-info">
 
-                <div class="disp-admin-card">
-                    <div class="disp-ano">2025</div>
-                    <div class="disp-corpo">
-                        <div class="disp-info">
-                            <h3>Copa Gaspar de Vôlei</h3>
-                            <span class="disp-coloc coloc-prata">2º lugar</span>
-                        </div>
-                        <div class="disp-acoes">
-                            <button
-                                class="acao-btn acao-editar"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalEditarCampeonato">
-                                Editar
-                            </button>
-                            <button class="acao-btn acao-excluir">Excluir</button>
-                        </div>
-                    </div>
-                </div>
+                        <h3>
+                            <?= htmlspecialchars($camp['nome']) ?>
+                        </h3>
 
-                <div class="disp-admin-card">
-                    <div class="disp-ano">2024</div>
-                    <div class="disp-corpo">
-                        <div class="disp-info">
-                            <h3>Torneio Amistoso Vale do Itajaí</h3>
-                            <span class="disp-coloc coloc-neutro">4º lugar</span>
-                        </div>
-                        <div class="disp-acoes">
-                            <button
-                                class="acao-btn acao-editar"
-                                data-bs-toggle="modal"
-                                data-bs-target="#modalEditarCampeonato">
-                                Editar
-                            </button>
-                            <button class="acao-btn acao-excluir">Excluir</button>
-                        </div>
+                        <?php if ($camp['colocacao']): ?>
+
+                            <span class="disp-coloc">
+                                <?= htmlspecialchars($camp['colocacao']) ?>
+                            </span>
+
+                        <?php endif; ?>
+
                     </div>
+
+
+                    <div class="disp-acoes">
+
+                        <a
+                            href="admin_campeonatos.php?edit=<?= $camp['id'] ?>"
+                            class="acao-btn acao-editar"
+                        >
+                            Editar
+                        </a>
+
+
+                        <form
+                            method="POST"
+                            onsubmit="return confirm('Excluir este campeonato?');"
+                        >
+
+                            <input
+                                type="hidden"
+                                name="acao"
+                                value="excluir"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="id"
+                                value="<?= $camp['id'] ?>"
+                            >
+
+                            <button
+                                type="submit"
+                                class="acao-btn acao-excluir"
+                            >
+                                Excluir
+                            </button>
+
+                        </form>
+
+                    </div>
+
                 </div>
 
             </div>
-        </div>
 
+        <?php endforeach; ?>
+
+    <?php endif; ?>
+
+</div>
         <div class="admin-secao">
 
             <div class="admin-secao-topo">
                 <div class="admin-secao-titulo">
-                    <span class="barra"></span>
-                    <h2>Conquistas</h2>
-                </div>
-                <span class="admin-secao-contagem">6 cadastradas</span>
+                    <span class="admin-secao-contagem">
+                   <?= count($conquistas) ?> cadastradas
+                  </span>
             </div>
 
             <div class="conquistas-grid">
 
-                <div class="conq-admin-card">
-                    <div class="conq-icone">🥈</div>
-                    <h4>Vice-campeão regional</h4>
-                    <p>Copa IFSC 2026</p>
-                    <div class="admin-card-acoes">
-                        <button
-                            class="acao-btn acao-editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarCampeonato">
-                            Editar
-                        </button>
-                        <button class="acao-btn acao-excluir">Excluir</button>
-                    </div>
+    <?php if (empty($conquistas)): ?>
+
+        <p>Nenhuma conquista cadastrada.</p>
+
+    <?php else: ?>
+
+        <?php foreach ($conquistas as $camp): ?>
+
+            <div class="conq-admin-card">
+
+                <div class="conq-icone">
+                    <?= htmlspecialchars($camp['icone'] ?: '🏆') ?>
                 </div>
 
-                <div class="conq-admin-card">
-                    <div class="conq-icone">🥇</div>
-                    <h4>Campeão integração IFSC</h4>
-                    <p>Torneio IFSC 2025</p>
-                    <div class="admin-card-acoes">
-                        <button
-                            class="acao-btn acao-editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarCampeonato">
-                            Editar
-                        </button>
-                        <button class="acao-btn acao-excluir">Excluir</button>
-                    </div>
-                </div>
+                <h4>
+                    <?= htmlspecialchars($camp['nome']) ?>
+                </h4>
 
-                <div class="conq-admin-card">
-                    <div class="conq-icone">🛡️</div>
-                    <h4>Melhor defesa</h4>
-                    <p>Regional SC 2025</p>
-                    <div class="admin-card-acoes">
-                        <button
-                            class="acao-btn acao-editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarCampeonato">
-                            Editar
-                        </button>
-                        <button class="acao-btn acao-excluir">Excluir</button>
-                    </div>
-                </div>
+                <p>
+                    <?= htmlspecialchars(
+                        $camp['descricao']
+                        ?: $camp['data_exibicao']
+                        ?: ''
+                    ) ?>
+                </p>
 
-                <div class="conq-admin-card">
-                    <div class="conq-icone">🏐</div>
-                    <h4>Destaque universitário</h4>
-                    <p>Copa Gaspar 2025</p>
-                    <div class="admin-card-acoes">
-                        <button
-                            class="acao-btn acao-editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarCampeonato">
-                            Editar
-                        </button>
-                        <button class="acao-btn acao-excluir">Excluir</button>
-                    </div>
-                </div>
 
-                <div class="conq-admin-card">
-                    <div class="conq-icone">💥</div>
-                    <h4>Melhor saque</h4>
-                    <p>Torneio Integração 2025</p>
-                    <div class="admin-card-acoes">
-                        <button
-                            class="acao-btn acao-editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarCampeonato">
-                            Editar
-                        </button>
-                        <button class="acao-btn acao-excluir">Excluir</button>
-                    </div>
-                </div>
+                <div class="admin-card-acoes">
 
-                <div class="conq-admin-card">
-                    <div class="conq-icone">📈</div>
-                    <h4>Maior evolução</h4>
-                    <p>Avaliação interna 2024</p>
-                    <div class="admin-card-acoes">
+                    <a
+                        href="admin_campeonatos.php?edit=<?= $camp['id'] ?>"
+                        class="acao-btn acao-editar"
+                    >
+                        Editar
+                    </a>
+
+
+                    <form
+                        method="POST"
+                        onsubmit="return confirm('Excluir esta conquista?');"
+                    >
+
+                        <input
+                            type="hidden"
+                            name="acao"
+                            value="excluir"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="id"
+                            value="<?= $camp['id'] ?>"
+                        >
+
                         <button
-                            class="acao-btn acao-editar"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalEditarCampeonato">
-                            Editar
+                            type="submit"
+                            class="acao-btn acao-excluir"
+                        >
+                            Excluir
                         </button>
-                        <button class="acao-btn acao-excluir">Excluir</button>
-                    </div>
+
+                    </form>
+
                 </div>
 
             </div>
-        </div>
+
+        <?php endforeach; ?>
+
+    <?php endif; ?>
+
+</div>
 
         <div class="modal fade" id="modalNovoCampeonato" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content admin-modal-content">
 
-                    <div class="modal-header admin-modal-header">
-                        <h5 class="modal-title">Novo Campeonato</h5>
-                        <button
-                            class="btn-close btn-close-white"
-                            data-bs-dismiss="modal">
-                        </button>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+
+        <form
+            method="POST"
+            action="admin_campeonatos.php"
+            class="modal-content admin-modal-content"
+        >
+
+            <input
+                type="hidden"
+                name="acao"
+                value="salvar"
+            >
+
+            <div class="modal-header admin-modal-header">
+
+                <h5 class="modal-title">
+                    Novo Campeonato
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                ></button>
+
+            </div>
+
+
+            <div class="modal-body admin-modal-body">
+
+                <div class="admin-form">
+
+                    <div class="form-grupo form-grupo-full">
+
+                        <label>
+                            Nome do campeonato
+                        </label>
+
+                        <input
+                            type="text"
+                            name="nome"
+                            placeholder="Ex: Copa Regional de Vôlei"
+                            required
+                        >
+
                     </div>
 
-                    <div class="modal-body admin-modal-body">
-                        <div class="admin-form">
 
-                            <div class="form-grupo form-grupo-full">
-                                <label>Nome do campeonato</label>
-                                <input type="text" placeholder="Ex: Copa Regional de Vôlei">
-                            </div>
+                    <div class="form-grupo">
 
-                            <div class="form-grupo">
-                                <label>Tipo</label>
-                                <select>
-                                    <option value="">Selecione o tipo</option>
-                                    <option value="proximo">Próximo campeonato</option>
-                                    <option value="disputado">Campeonato disputado</option>
-                                    <option value="conquista">Conquista</option>
-                                </select>
-                            </div>
+                        <label>Tipo</label>
 
-                            <div class="form-grupo">
-                                <label>Status</label>
-                                <select>
-                                    <option value="">Selecione o status</option>
-                                    <option value="aberto">Inscrições abertas</option>
-                                    <option value="confirmado">Confirmado</option>
-                                    <option value="analise">Em análise</option>
-                                    <option value="finalizado">Finalizado</option>
-                                </select>
-                            </div>
+                        <select name="tipo" required>
 
-                            <div class="form-grupo">
-                                <label>Local</label>
-                                <input type="text" placeholder="Ex: Ginásio IFSC Gaspar">
-                            </div>
+                            <option value="">
+                                Selecione o tipo
+                            </option>
 
-                            <div class="form-grupo">
-                                <label>Data</label>
-                                <input type="text" placeholder="Ex: 14 e 15 de junho de 2026">
-                            </div>
+                            <option value="proximo">
+                                Próximo campeonato
+                            </option>
 
-                            <div class="form-grupo">
-                                <label>Ano</label>
-                                <input type="text" placeholder="Ex: 2026">
-                            </div>
+                            <option value="disputado">
+                                Campeonato disputado
+                            </option>
 
-                            <div class="form-grupo">
-                                <label>Colocação</label>
-                                <select>
-                                    <option value="">Selecione a colocação</option>
-                                    <option value="1">1º lugar</option>
-                                    <option value="2">2º lugar</option>
-                                    <option value="3">3º lugar</option>
-                                    <option value="4">4º lugar</option>
-                                    <option value="participacao">Participação</option>
-                                    <option value="nao-informado">Não informado</option>
-                                </select>
-                            </div>
+                            <option value="conquista">
+                                Conquista
+                            </option>
 
-                            <div class="form-grupo">
-                                <label>Ícone da conquista <span class="opcional">(opcional)</span></label>
-                                <input type="text" placeholder="Ex: 🥇">
-                            </div>
+                        </select>
 
-                            <div class="form-grupo form-grupo-full">
-                                <label>Descrição</label>
-                                <textarea rows="3" placeholder="Descrição curta do campeonato..."></textarea>
-                            </div>
-
-                        </div>
                     </div>
 
-                    <div class="modal-footer admin-modal-footer">
-                        <button class="btn-modal-cancelar" data-bs-dismiss="modal">Cancelar</button>
-                        <button class="btn-modal-salvar">Salvar campeonato</button>
+
+                    <div class="form-grupo">
+
+                        <label>Status</label>
+
+                        <select name="status">
+
+                            <option value="">
+                                Sem status
+                            </option>
+
+                            <option value="aberto">
+                                Inscrições abertas
+                            </option>
+
+                            <option value="confirmado">
+                                Confirmado
+                            </option>
+
+                            <option value="analise">
+                                Em análise
+                            </option>
+
+                            <option value="finalizado">
+                                Finalizado
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-grupo">
+
+                        <label>Local</label>
+
+                        <input
+                            type="text"
+                            name="local"
+                            placeholder="Ex: Ginásio IFSC Gaspar"
+                        >
+
+                    </div>
+
+
+                    <div class="form-grupo">
+
+                        <label>Data</label>
+
+                        <input
+                            type="text"
+                            name="data_exibicao"
+                            placeholder="Ex: 14 e 15 de junho de 2026"
+                        >
+
+                    </div>
+
+
+                    <div class="form-grupo">
+
+                        <label>Ano</label>
+
+                        <input
+                            type="number"
+                            name="ano"
+                            placeholder="Ex: 2026"
+                        >
+
+                    </div>
+
+
+                    <div class="form-grupo">
+
+                        <label>Colocação</label>
+
+                        <select name="colocacao">
+
+                            <option value="">
+                                Não informado
+                            </option>
+
+                            <option value="1º lugar">
+                                1º lugar
+                            </option>
+
+                            <option value="2º lugar">
+                                2º lugar
+                            </option>
+
+                            <option value="3º lugar">
+                                3º lugar
+                            </option>
+
+                            <option value="4º lugar">
+                                4º lugar
+                            </option>
+
+                            <option value="Participação">
+                                Participação
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-grupo">
+
+                        <label>
+                            Ícone da conquista
+                            <span class="opcional">
+                                (opcional)
+                            </span>
+                        </label>
+
+                        <input
+                            type="text"
+                            name="icone"
+                            placeholder="Ex: 🥇"
+                        >
+
+                    </div>
+
+
+                    <div class="form-grupo form-grupo-full">
+
+                        <label>Descrição</label>
+
+                        <textarea
+                            name="descricao"
+                            rows="3"
+                            placeholder="Descrição curta do campeonato..."
+                        ></textarea>
+
                     </div>
 
                 </div>
+
             </div>
-        </div>
 
-        <div class="modal fade" id="modalEditarCampeonato" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content admin-modal-content">
 
-                    <div class="modal-header admin-modal-header">
-                        <h5 class="modal-title">Editar Campeonato</h5>
-                        <button
-                            class="btn-close btn-close-white"
-                            data-bs-dismiss="modal">
-                        </button>
-                    </div>
+            <div class="modal-footer admin-modal-footer">
 
-                    <div class="modal-body admin-modal-body">
-                        <div class="admin-form">
+                <button
+                    type="button"
+                    class="btn-modal-cancelar"
+                    data-bs-dismiss="modal"
+                >
+                    Cancelar
+                </button>
 
-                            <div class="form-grupo form-grupo-full">
-                                <label>Nome do campeonato</label>
-                                <input type="text" value="Campeonato IFSC">
-                            </div>
+                <button
+                    type="submit"
+                    class="btn-modal-salvar"
+                >
+                    Salvar campeonato
+                </button>
 
-                            <div class="form-grupo">
-                                <label>Tipo</label>
-                                <select>
-                                    <option value="proximo" selected>Próximo campeonato</option>
-                                    <option value="disputado">Campeonato disputado</option>
-                                    <option value="conquista">Conquista</option>
-                                </select>
-                            </div>
-
-                            <div class="form-grupo">
-                                <label>Status</label>
-                                <select>
-                                    <option value="aberto" selected>Inscrições abertas</option>
-                                    <option value="confirmado">Confirmado</option>
-                                    <option value="analise">Em análise</option>
-                                    <option value="finalizado">Finalizado</option>
-                                </select>
-                            </div>
-
-                            <div class="form-grupo">
-                                <label>Local</label>
-                                <input type="text" value="Ginásio IFSC Gaspar">
-                            </div>
-
-                            <div class="form-grupo">
-                                <label>Data</label>
-                                <input type="text" value="14 e 15 de junho de 2026">
-                            </div>
-
-                            <div class="form-grupo">
-                                <label>Ano</label>
-                                <input type="text" value="2026">
-                            </div>
-
-                            <div class="form-grupo">
-                                <label>Colocação</label>
-                                <select>
-                                    <option value="">Selecione a colocação</option>
-                                    <option value="1">1º lugar</option>
-                                    <option value="2">2º lugar</option>
-                                    <option value="3">3º lugar</option>
-                                    <option value="4">4º lugar</option>
-                                    <option value="participacao">Participação</option>
-                                    <option value="nao-informado" selected>Não informado</option>
-                                </select>
-                            </div>
-
-                            <div class="form-grupo">
-                                <label>Ícone da conquista <span class="opcional">(opcional)</span></label>
-                                <input type="text" placeholder="Ex: 🥇">
-                            </div>
-
-                            <div class="form-grupo form-grupo-full">
-                                <label>Descrição</label>
-                                <textarea rows="3">Participação da equipe no campeonato interno do IFSC Gaspar.</textarea>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="modal-footer admin-modal-footer">
-                        <button class="btn-modal-cancelar" data-bs-dismiss="modal">Cancelar</button>
-                        <button class="btn-modal-salvar">Salvar alterações</button>
-                    </div>
-
-                </div>
             </div>
-        </div>
+
+        </form>
 
     </div>
+
+</div>
+        </div>
+
+        <?php if ($editando): ?>
+
+<div class="modal fade" id="modalEditarCampeonato" tabindex="-1">
+
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+
+        <form
+            method="POST"
+            action="admin_campeonatos.php"
+            class="modal-content admin-modal-content"
+        >
+
+            <input
+                type="hidden"
+                name="acao"
+                value="editar"
+            >
+
+            <input
+                type="hidden"
+                name="id"
+                value="<?= (int) $editando['id'] ?>"
+            >
+
+            <div class="modal-header admin-modal-header">
+
+                <h5 class="modal-title">
+                    Editar Campeonato
+                </h5>
+
+                <a
+                    href="admin_campeonatos.php"
+                    class="btn-close btn-close-white"
+                ></a>
+
+            </div>
+
+            <div class="modal-body admin-modal-body">
+
+                <div class="admin-form">
+
+                    <div class="form-grupo form-grupo-full">
+
+                        <label>Nome do campeonato</label>
+
+                        <input
+                            type="text"
+                            name="nome"
+                            value="<?= htmlspecialchars($editando['nome'] ?? '') ?>"
+                            required
+                        >
+
+                    </div>
+
+                    <div class="form-grupo">
+
+                        <label>Tipo</label>
+
+                        <select name="tipo" required>
+
+                            <option value="proximo"
+                                <?= ($editando['tipo'] ?? '') === 'proximo' ? 'selected' : '' ?>>
+                                Próximo campeonato
+                            </option>
+
+                            <option value="disputado"
+                                <?= ($editando['tipo'] ?? '') === 'disputado' ? 'selected' : '' ?>>
+                                Campeonato disputado
+                            </option>
+
+                            <option value="conquista"
+                                <?= ($editando['tipo'] ?? '') === 'conquista' ? 'selected' : '' ?>>
+                                Conquista
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-grupo">
+
+                        <label>Status</label>
+
+                        <select name="status">
+
+                            <option value="">
+                                Sem status
+                            </option>
+
+                            <option value="aberto"
+                                <?= ($editando['status'] ?? '') === 'aberto' ? 'selected' : '' ?>>
+                                Inscrições abertas
+                            </option>
+
+                            <option value="confirmado"
+                                <?= ($editando['status'] ?? '') === 'confirmado' ? 'selected' : '' ?>>
+                                Confirmado
+                            </option>
+
+                            <option value="analise"
+                                <?= ($editando['status'] ?? '') === 'analise' ? 'selected' : '' ?>>
+                                Em análise
+                            </option>
+
+                            <option value="finalizado"
+                                <?= ($editando['status'] ?? '') === 'finalizado' ? 'selected' : '' ?>>
+                                Finalizado
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-grupo">
+
+                        <label>Local</label>
+
+                        <input
+                            type="text"
+                            name="local"
+                            value="<?= htmlspecialchars($editando['local'] ?? '') ?>"
+                        >
+
+                    </div>
+
+                    <div class="form-grupo">
+
+                        <label>Data</label>
+
+                        <input
+                            type="text"
+                            name="data_exibicao"
+                            value="<?= htmlspecialchars($editando['data_exibicao'] ?? '') ?>"
+                        >
+
+                    </div>
+
+                    <div class="form-grupo">
+
+                        <label>Ano</label>
+
+                        <input
+                            type="number"
+                            name="ano"
+                            value="<?= htmlspecialchars($editando['ano'] ?? '') ?>"
+                        >
+
+                    </div>
+
+                    <div class="form-grupo">
+
+                        <label>Colocação</label>
+
+                        <select name="colocacao">
+
+                            <option value="">
+                                Não informado
+                            </option>
+
+                            <option value="1º lugar"
+                                <?= ($editando['colocacao'] ?? '') === '1º lugar' ? 'selected' : '' ?>>
+                                1º lugar
+                            </option>
+
+                            <option value="2º lugar"
+                                <?= ($editando['colocacao'] ?? '') === '2º lugar' ? 'selected' : '' ?>>
+                                2º lugar
+                            </option>
+
+                            <option value="3º lugar"
+                                <?= ($editando['colocacao'] ?? '') === '3º lugar' ? 'selected' : '' ?>>
+                                3º lugar
+                            </option>
+
+                            <option value="4º lugar"
+                                <?= ($editando['colocacao'] ?? '') === '4º lugar' ? 'selected' : '' ?>>
+                                4º lugar
+                            </option>
+
+                            <option value="Participação"
+                                <?= ($editando['colocacao'] ?? '') === 'Participação' ? 'selected' : '' ?>>
+                                Participação
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="form-grupo">
+
+                        <label>
+                            Ícone da conquista
+                            <span class="opcional">(opcional)</span>
+                        </label>
+
+                        <input
+                            type="text"
+                            name="icone"
+                            value="<?= htmlspecialchars($editando['icone'] ?? '') ?>"
+                            placeholder="Ex: 🥇"
+                        >
+
+                    </div>
+
+                    <div class="form-grupo form-grupo-full">
+
+                        <label>Descrição</label>
+
+                        <textarea
+                            name="descricao"
+                            rows="3"
+                        ><?= htmlspecialchars($editando['descricao'] ?? '') ?></textarea>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer admin-modal-footer">
+
+                <a
+                    href="admin_campeonatos.php"
+                    class="btn-modal-cancelar"
+                >
+                    Cancelar
+                </a>
+
+                <button
+                    type="submit"
+                    class="btn-modal-salvar"
+                >
+                    Salvar alterações
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<?php endif; ?>
 </section>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

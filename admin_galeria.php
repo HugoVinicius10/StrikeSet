@@ -14,14 +14,14 @@ require_once __DIR__ . '/conexao.php';
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<link rel="stylesheet" href="global.css?v=<?php echo time(); ?>">
-<link rel="stylesheet" href="admin_galeria.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="visual/css/global.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="visual/css/admin_galeria.css?v=<?php echo time(); ?>">
 
 </head>
 
 <body class="pagina-admin">
 
-<?php require_once __DIR__ . '/includes/header.php'; ?>
+<?php require_once __DIR__ . '/includes/header_admin.php'; ?>
 
 <section class="admin-hero">
     <div class="admin-hero-inner">
@@ -115,7 +115,7 @@ require_once __DIR__ . '/conexao.php';
          data-status="publicado">
 
         <div class="admin-card-img">
-            <img src="treino1.avif" alt="Treinos">
+            <img src="visual/images/treino1.avif" alt="Treinos">
 
             <span class="album-status status-pub">
                 Publicado
@@ -173,7 +173,7 @@ require_once __DIR__ . '/conexao.php';
          data-status="publicado">
 
         <div class="admin-card-img">
-            <img src="camp1.avif" alt="Campeonato Regional">
+            <img src="visual/images/camp1.avif" alt="Campeonato Regional">
 
             <span class="album-status status-pub">
                 Publicado
@@ -231,7 +231,7 @@ require_once __DIR__ . '/conexao.php';
          data-status="publicado">
 
         <div class="admin-card-img">
-            <img src="time1.avif" alt="Time 2026">
+            <img src="visual/images/time1.avif" alt="Time 2026">
 
             <span class="album-status status-pub">
                 Publicado

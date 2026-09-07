@@ -1,26 +1,21 @@
+<?php
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Campeonatos | StrikeSet Gaspar</title>
-    <link rel="stylesheet" href="global.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="campeonatos.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="visual/css/global.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="visual/css/campeonatos.css?v=<?php echo time(); ?>">
 </head>
 
 <body class="pagina-campeonatos">
 
-<header>
-    <h2>StrikeSet Gaspar</h2>
-    <nav>
-        <a href="home.php">Inicio</a>
-        <a href="galeria.php">Galeria</a>
-        <a href="sobre.php">Sobre</a>
-        <a href="treinos.php">Treinos</a>
-        <a href="campeonatos.php">Campeonatos</a>
-        <a class="btn-login" href="login.php">LOGIN/REGISTRO</a>
-    </nav>
-</header>
+<?php require_once __DIR__ . '/includes/header.php'; ?>
 
 <section class="camp-hero">
     <div class="camp-hero-overlay"></div>

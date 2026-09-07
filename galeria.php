@@ -1,3 +1,11 @@
+<?php
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -8,28 +16,14 @@
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<link rel="stylesheet" href="global.css?v=<?php echo time(); ?>">
-<link rel="stylesheet" href="galeria.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="visual/css/global.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="visual/css/galeria.css?v=<?php echo time(); ?>">
 
 </head>
 
 <body>
 
-<header>
-
-<h2>StrikeSet Gaspar</h2>
-
-<nav>
-    <a href="home.php">Inicio</a>
-    <a href="galeria.php">Galeria</a>
-    <a href="sobre.php">Sobre o Time</a>
-    <a href="treinos.php">Treinos</a>
-    <a href="campeonatos.php">Campeonatos</a>
-    <a class="btn-login" href="login.php">LOGIN/REGISTRO</a>
-</nav>
-
-</header>
-
+<?php require_once __DIR__ . '/includes/header.php'; ?>
 
 <section class="galeria-section">
 
@@ -52,7 +46,7 @@ Treinos, campeonatos e toda energia do nosso time.
 
 <div class="galeria-card" data-bs-toggle="modal" data-bs-target="#modalTreino">
 
-<img src="treino1.avif">
+<img src="visual/images/treino1.avif">
 
 <div class="galeria-card-body">
 
@@ -72,7 +66,7 @@ Treinos, campeonatos e toda energia do nosso time.
 
 <div class="galeria-card" data-bs-toggle="modal" data-bs-target="#modalCamp">
 
-<img src="camp1.avif">
+<img src="visual/images/camp1.avif">
 
 <div class="galeria-card-body">
 
@@ -92,7 +86,7 @@ Treinos, campeonatos e toda energia do nosso time.
 
 <div class="galeria-card" data-bs-toggle="modal" data-bs-target="#modalTime">
 
-<img src="time1.avif">
+<img src="visual/images/time1.avif">
 
 <div class="galeria-card-body">
 
@@ -140,14 +134,14 @@ Treinos, campeonatos e toda energia do nosso time.
 
 <div class="carousel-item active">
 
-<img src="treino1.avif" class="d-block w-100">
+<img src="visual/images/treino1.avif" class="d-block w-100">
 
 </div>
 
 
 <div class="carousel-item">
 
-<img src="treino2.avif" class="d-block w-100">
+<img src="visual/images/treino2.avif" class="d-block w-100">
 
 </div>
 
@@ -204,13 +198,13 @@ Treinos, campeonatos e toda energia do nosso time.
 
 <div class="carousel-item active">
 
-<img src="camp1.avif" class="d-block w-100">
+<img src="visual/images/camp1.avif" class="d-block w-100">
 
 </div>
 
 <div class="carousel-item">
 
-<img src="camp2.avif" class="d-block w-100">
+<img src="visual/images/camp2.avif" class="d-block w-100">
 
 </div>
 
@@ -264,13 +258,13 @@ Treinos, campeonatos e toda energia do nosso time.
 
 <div class="carousel-item active">
 
-<img src="time1.avif" class="d-block w-100">
+<img src="visual/images/time1.avif" class="d-block w-100">
 
 </div>
 
 <div class="carousel-item">
 
-<img src="time2.avif" class="d-block w-100">
+<img src="visual/images/time2.avif" class="d-block w-100">
 
 </div>
 

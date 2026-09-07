@@ -1,3 +1,10 @@
+<?php
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -5,22 +12,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Treinos | StrikeSet Gaspar</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="global.css?v=<?php echo time(); ?>">
-<link rel="stylesheet" href="treinos.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="visual/css/global.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="visual/css/treinos.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
-<header>
-    <h2>StrikeSet Gaspar</h2>
-    <nav>
-        <a href="home.php">Inicio</a>
-        <a href="galeria.php">Galeria</a>
-        <a href="sobre.php">Sobre o Time</a>
-        <a href="treinos.php">Treinos</a>
-        <a href="campeonatos.php">Campeonatos</a>
-        <a href="login.php" class="btn-login">LOGIN/REGISTRO</a>
-    </nav>
-</header>
+<?php require_once __DIR__ . '/includes/header.php'; ?>
 
 <section class="treinos-section">
 

@@ -1,0 +1,129 @@
+:root {
+  --laranja: #f97316;
+  --laranja-escuro: #ea580c;
+
+  --preto: #000000;
+  --preto-claro: #111111;
+  --cinza-escuro: #1a1a1a;
+
+  --cinza-medio: #333333;
+  --cinza-texto: #cccccc;
+  --cinza-claro: #dddddd;
+}
+
+/* RESET */
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+font-family:Arial, Helvetica, sans-serif;
+background:var(--preto);
+color:white;
+display:flex;
+flex-direction:column;
+min-height:100vh;
+}
+
+/* HEADER */
+
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px 40px;
+background:var(--preto-claro);
+border-bottom:1px solid var(--cinza-medio);
+position:sticky;
+top:0;
+}
+
+header h2{
+font-size:2rem;
+font-weight:bold;
+color:var(--laranja);
+}
+
+nav{
+display:flex;
+gap:20px;
+align-items:center;
+}
+
+nav a{
+color:var(--cinza-texto);
+text-decoration:none;
+font-weight:500;
+transition:0.3s;
+}
+
+nav a:hover{
+color:var(--laranja);
+}
+
+nav .btn-login{
+background:var(--laranja);
+color:white;
+padding:8px 16px;
+border-radius:6px;
+}
+
+nav .btn-login:hover{
+background:var(--laranja-escuro);
+color:white;
+}
+
+/* ANIMAÇÕES */
+
+@keyframes flutuar{
+0%,100%{transform:translateY(0);}
+50%{transform:translateY(-10px);}
+}
+
+@keyframes fadeIn{
+from{
+opacity:0;
+transform:translateY(20px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+/* FOOTER */
+
+footer{
+background:var(--laranja);
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:20px 40px;
+color:white;
+margin-top:auto;
+}
+
+footer p{
+font-size:1.3rem;
+font-weight:bold;
+}
+
+footer div{
+display:flex;
+gap:15px;
+}
+
+footer img{
+width:25px;
+height:25px;
+cursor:pointer;
+transition:0.3s;
+filter:brightness(0) invert(1);
+}
+
+footer img:hover{
+transform:scale(1.2);
+}
