@@ -28,20 +28,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nome  = trim($_POST['nome'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $senha = $_POST['senha'] ?? '';
+        $repetirSenha = $_POST['repetir_senha'] ?? '';
 
-        if ($nome === '' || $email === '' || $senha === '') {
+        if (
+    $nome === '' ||
+    $email === '' ||
+    $senha === '' ||
+    $repetirSenha === ''
+) {
 
-            $erro = 'Preencha todos os campos.';
+    $erro = 'Preencha todos os campos.';
 
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
-            $erro = 'E-mail inválido.';
+    $erro = 'E-mail inválido.';
 
-        } elseif (strlen($senha) < 6) {
+} elseif (strlen($senha) < 6) {
 
-            $erro = 'A senha deve possuir pelo menos 6 caracteres.';
+    $erro = 'A senha deve possuir pelo menos 6 caracteres.';
 
-        } else {
+} elseif ($senha !== $repetirSenha) {
+
+    $erro = 'As senhas não coincidem.';
+
+} else {
 
             $stmt = $conn->prepare("
                 SELECT id
@@ -183,17 +193,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <main class="auth-container">
 
       <?php if ($erro): ?>
-     <div class="alert alert-danger">
+    <div class="alert alert-danger">
         <?= htmlspecialchars($erro) ?>
-     </div>
-      <?php endif; ?>
-      <?php if ($sucesso): ?>
+    </div>
+<?php endif; ?>
+
+<?php if ($sucesso): ?>
     <div class="alert alert-success">
         <?= htmlspecialchars($sucesso) ?>
     </div>
-      <?php endif; ?>
-      
-        <div class="hero-img">
+<?php endif; ?>
+
+<main class="auth-container">
+
+    <div class="hero-img">
             <img src="visual/images/jogador.png" alt="Jogadora de vôlei">
         </div>
 
@@ -243,13 +256,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     </form>
 
+  <div class="auth-card">
+
+    <!-- LOGIN -->
+
     <div class="text-small">
-        <a href="#">Esqueceu a senha?</a>
+        <a href="esqueci_senha.php">
+            Esqueceu a senha?
+        </a>
     </div>
 
-</div>
+</div> <!-- FECHA O CARD LOGIN -->
 
 <div class="auth-card">
+
+    <!-- CADASTRO -->
 
     <h2>Cadastro</h2>
 
@@ -290,16 +311,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="form-group">
-            <label for="cadastro-senha">Senha</label>
+    <label for="cadastro-senha">Senha</label>
 
-            <input
-                type="password"
-                id="cadastro-senha"
-                name="senha"
-                placeholder="Crie uma senha"
-                required
-            >
-        </div>
+    <input
+        type="password"
+        id="cadastro-senha"
+        name="senha"
+        placeholder="Crie uma senha"
+        required
+    >
+</div>
+
+<div class="form-group">
+    <label for="cadastro-repetir-senha">
+        Repetir senha
+    </label>
+
+    <input
+        type="password"
+        id="cadastro-repetir-senha"
+        name="repetir_senha"
+        placeholder="Digite novamente sua senha"
+        required
+    >
+</div>
 
         <button type="submit" class="btn-auth">
             Cadastrar

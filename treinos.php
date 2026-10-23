@@ -3,7 +3,42 @@
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
+require_once __DIR__ . '/conexao.php';
 
+$resultado = $conn->query("
+    SELECT
+        id,
+        dia,
+        titulo,
+        horario,
+        descricao,
+        nivel
+    FROM treinos
+    ORDER BY
+        FIELD(
+            dia,
+            'SEG',
+            'TER',
+            'QUA',
+            'QUI',
+            'SEX',
+            'SAB'
+        ),
+        horario
+");
+
+$treinos = [];
+
+while ($row = $resultado->fetch_assoc()) {
+    $treinos[] = $row;
+}
+
+$niveis = [
+    'iniciante' => 'Iniciante',
+    'intermediario' => 'Intermediário',
+    'avancado' => 'Avançado',
+    'todos' => 'Todos os níveis'
+];
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -35,65 +70,49 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
     <div class="cronograma-grid">
 
-        <div class="treino-card">
-            <div class="dia-tag">SEG</div>
-            <div class="treino-card-body">
-                <h5>Fundamentos</h5>
-                <p class="horario"> 19h00 - 21h00</p>
-                <p class="descricao">Saque, manchete, toque e recepção.</p>
-                <span class="nivel iniciante">Iniciante</span>
-            </div>
-        </div>
+        <?php if (empty($treinos)): ?>
+
+    <p class="sem-registros">
+        Nenhum treino cadastrado no momento.
+    </p>
+
+<?php else: ?>
+
+    <?php foreach ($treinos as $treino): ?>
 
         <div class="treino-card">
-            <div class="dia-tag">TER</div>
-            <div class="treino-card-body">
-                <h5>Preparação Física</h5>
-                <p class="horario"> 19h00 - 20h30</p>
-                <p class="descricao">Força, explosão e condicionamento.</p>
-                <span class="nivel todos">Todos os níveis</span>
+
+            <div class="dia-tag">
+                <?= htmlspecialchars($treino['dia']) ?>
             </div>
+
+            <div class="treino-card-body">
+
+                <h5>
+                    <?= htmlspecialchars($treino['titulo']) ?>
+                </h5>
+
+                <p class="horario">
+                    <?= htmlspecialchars($treino['horario']) ?>
+                </p>
+
+                <p class="descricao">
+                    <?= htmlspecialchars($treino['descricao'] ?? '') ?>
+                </p>
+
+                <span class="nivel <?= htmlspecialchars($treino['nivel']) ?>">
+                    <?= htmlspecialchars(
+                        $niveis[$treino['nivel']] ?? $treino['nivel']
+                    ) ?>
+                </span>
+
+            </div>
+
         </div>
 
-        <div class="treino-card">
-            <div class="dia-tag">QUA</div>
-            <div class="treino-card-body">
-                <h5>Tático Coletivo</h5>
-                <p class="horario"> 19h00 - 21h30</p>
-                <p class="descricao">Sistemas de jogo, posicionamento e jogadas ensaiadas.</p>
-                <span class="nivel avancado">Avançado</span>
-            </div>
-        </div>
+    <?php endforeach; ?>
 
-        <div class="treino-card">
-            <div class="dia-tag">QUI</div>
-            <div class="treino-card-body">
-                <h5>Ataque e Bloqueio</h5>
-                <p class="horario"> 19h00 - 21h00</p>
-                <p class="descricao">Treino específico de cortada, largada e bloqueio na rede.</p>
-                <span class="nivel intermediario">Intermediário</span>
-            </div>
-        </div>
-
-        <div class="treino-card">
-            <div class="dia-tag">SEX</div>
-            <div class="treino-card-body">
-                <h5>Jogo Treino</h5>
-                <p class="horario"> 19h30 - 22h00</p>
-                <p class="descricao">Coletivo entre o time pra fechar a semana.</p>
-                <span class="nivel todos">Todos os níveis</span>
-            </div>
-        </div>
-
-        <div class="treino-card">
-            <div class="dia-tag">SAB</div>
-            <div class="treino-card-body">
-                <h5>Amistosos</h5>
-                <p class="horario"> 15h00 - 18h00</p>
-                <p class="descricao">Jogos contra outros times da região.</p>
-                <span class="nivel avancado">Avançado</span>
-            </div>
-        </div>
+<?php endif; ?>
 
     </div>
 
