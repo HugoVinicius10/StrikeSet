@@ -5,6 +5,103 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 }
 require_once __DIR__ . '/conexao.php';
 
+$mensagemInscricao = '';
+$tipoMensagem = '';
+
+if (
+    $_SERVER['REQUEST_METHOD'] === 'POST' &&
+    ($_POST['acao'] ?? '') === 'inscrever'
+) {
+
+    if (!isset($_SESSION['usuario_id'])) {
+
+        header('Location: login.php');
+        exit;
+    }
+
+    $usuarioId = (int) $_SESSION['usuario_id'];
+    $treinoId = (int) ($_POST['treino_id'] ?? 0);
+    $telefone = trim($_POST['telefone'] ?? '');
+
+    if ($treinoId <= 0) {
+
+        $mensagemInscricao = 'Selecione um treino.';
+        $tipoMensagem = 'erro';
+
+    } else {
+
+        $stmt = $conn->prepare("
+            SELECT id
+            FROM treinos
+            WHERE id = ?
+        ");
+
+        $stmt->bind_param("i", $treinoId);
+        $stmt->execute();
+
+        $treinoExiste = $stmt
+            ->get_result()
+            ->fetch_assoc();
+
+        if (!$treinoExiste) {
+
+            $mensagemInscricao = 'Treino inválido.';
+            $tipoMensagem = 'erro';
+
+        } else {
+
+            $stmt = $conn->prepare("
+                SELECT id
+                FROM inscricoes_treino
+                WHERE usuario_id = ?
+                  AND treino_id = ?
+                LIMIT 1
+            ");
+
+            $stmt->bind_param(
+                "ii",
+                $usuarioId,
+                $treinoId
+            );
+
+            $stmt->execute();
+
+            if ($stmt->get_result()->num_rows > 0) {
+
+                $mensagemInscricao =
+                    'Você já está inscrito neste treino.';
+
+                $tipoMensagem = 'erro';
+
+            } else {
+
+                $stmt = $conn->prepare("
+                    INSERT INTO inscricoes_treino (
+                        usuario_id,
+                        treino_id,
+                        telefone
+                    )
+                    VALUES (?, ?, ?)
+                ");
+
+                $stmt->bind_param(
+                    "iis",
+                    $usuarioId,
+                    $treinoId,
+                    $telefone
+                );
+
+                $stmt->execute();
+
+                $mensagemInscricao =
+                    'Inscrição realizada com sucesso!';
+
+                $tipoMensagem = 'sucesso';
+            }
+        }
+    }
+}
+
 $resultado = $conn->query("
     SELECT
         id,
@@ -121,42 +218,78 @@ $niveis = [
             <h2>Inscreva-se em um Treino</h2>
             <p class="inscricao-sub">Preencha os dados abaixo e garanta sua vaga.</p>
 
-            <form id="formInscricao" class="inscricao-form" novalidate>
+            <form
+    id="formInscricao"
+    class="inscricao-form"
+    method="POST"
+    action="treinos.php"
+>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="nome">Nome Completo</label>
-                        <input type="text" id="nome" name="nome" maxlength="100" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">E-mail</label>
-                        <input type="email" id="email" name="email" maxlength="255" required>
-                    </div>
-                </div>
+    <input
+        type="hidden"
+        name="acao"
+        value="inscrever"
+    >
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="telefone">Telefone (WhatsApp)</label>
-                        <input type="tel" id="telefone" name="telefone" maxlength="20" required>
-                    </div>
-                </div>
+    <?php if ($mensagemInscricao): ?>
+        <p class="form-feedback <?= htmlspecialchars($tipoMensagem) ?>">
+            <?= htmlspecialchars($mensagemInscricao) ?>
+        </p>
+    <?php endif; ?>
 
-                <div class="form-group">
-                    <label for="treino">Qual treino você quer fazer?</label>
-                    <select id="treino" name="treino" required>
-                        <option value="">Selecione um treino...</option>
-                        <option value="seg">Segunda - Fundamentos (19h00)</option>
-                        <option value="ter">Terça - Preparação Física (19h00)</option>
-                        <option value="qua">Quarta - Tático Coletivo (19h00)</option>
-                        <option value="qui">Quinta - Ataque e Bloqueio (19h00)</option>
-                        <option value="sex">Sexta - Jogo Treino (19h30)</option>
-                        <option value="sab">Sábado - Amistosos (15h00)</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn-inscrever">QUERO ME INSCREVER</button>
+    <div class="form-row">
+        <div class="form-group">
+            <label for="telefone">
+                Telefone (WhatsApp)
+            </label>
 
-                <p class="form-feedback" id="formFeedback"></p>
-            </form>
+            <input
+                type="tel"
+                id="telefone"
+                name="telefone"
+                maxlength="20"
+                required
+            >
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="treino">
+            Qual treino você quer fazer?
+        </label>
+
+        <select
+            id="treino"
+            name="treino_id"
+            required
+        >
+            <option value="">
+                Selecione um treino...
+            </option>
+
+            <?php foreach ($treinos as $treino): ?>
+
+                <option value="<?= (int) $treino['id'] ?>">
+                    <?= htmlspecialchars($treino['dia']) ?>
+                    -
+                    <?= htmlspecialchars($treino['titulo']) ?>
+                    -
+                    <?= htmlspecialchars($treino['horario']) ?>
+                </option>
+
+            <?php endforeach; ?>
+
+        </select>
+    </div>
+
+    <button
+        type="submit"
+        class="btn-inscrever"
+    >
+        QUERO ME INSCREVER
+    </button>
+
+</form>
         </div>
     </div>
 
@@ -172,45 +305,6 @@ $niveis = [
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    const form = document.getElementById('formInscricao');
-    const feedback = document.getElementById('formFeedback');
-
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        feedback.className = 'form-feedback';
-        feedback.textContent = '';
-
-        const nome = document.getElementById('nome').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const telefone = document.getElementById('telefone').value.trim();
-        const nivel = document.getElementById('nivel').value;
-        const treino = document.getElementById('treino').value;
-
-        if (!nome || nome.length < 3) {
-            feedback.textContent = '⚠️ Informe seu nome completo (mínimo 3 caracteres).';
-            feedback.classList.add('erro');
-            return;
-        }
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            feedback.textContent = '⚠️ E-mail inválido.';
-            feedback.classList.add('erro');
-            return;
-        }
-
-        if (telefone.length < 8) {
-            feedback.textContent = '⚠️ Informe um telefone válido.';
-            feedback.classList.add('erro');
-            return;
-        }
-        feedback.textContent = '✅ Inscrição enviada! Em breve entraremos em contato.';
-        feedback.classList.add('sucesso');
-        form.reset();
-    });
-</script>
 
 </body>
 </html>

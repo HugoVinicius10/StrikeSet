@@ -143,3 +143,43 @@ CREATE TABLE fotos (
         ON DELETE CASCADE
 ) ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4;
+
+### inscricoes_treino
+
+CREATE TABLE inscricoes_treino (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+    usuario_id INT UNSIGNED NOT NULL,
+    treino_id INT UNSIGNED NOT NULL,
+
+    telefone VARCHAR(20) DEFAULT NULL,
+
+    status ENUM(
+        'pendente',
+        'confirmada',
+        'cancelada'
+    ) NOT NULL DEFAULT 'pendente',
+
+    criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    UNIQUE KEY uk_usuario_treino (
+        usuario_id,
+        treino_id
+    ),
+
+    KEY idx_inscricao_usuario (usuario_id),
+    KEY idx_inscricao_treino (treino_id),
+
+    CONSTRAINT fk_inscricao_usuario
+        FOREIGN KEY (usuario_id)
+        REFERENCES usuarios(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_inscricao_treino
+        FOREIGN KEY (treino_id)
+        REFERENCES treinos(id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4;

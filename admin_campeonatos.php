@@ -61,10 +61,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = $status !== '' ? $status : null;
 
         $local = trim($_POST['local'] ?? '');
-        $dataExibicao = trim($_POST['data_exibicao'] ?? '');
+        $dataInicio = trim($_POST['data_inicio'] ?? '');
+        $dataFim = trim($_POST['data_fim'] ?? '');
 
-        $ano = trim($_POST['ano'] ?? '');
-        $ano = $ano !== '' ? (int) $ano : null;
+        $dataFim = $dataFim !== '' ? $dataFim : null;
 
         $colocacao = trim($_POST['colocacao'] ?? '');
         $colocacao = $colocacao !== '' ? $colocacao : null;
@@ -107,32 +107,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($acao === 'salvar') {
 
                 $stmt = $conn->prepare("
-                    INSERT INTO campeonatos (
-                        nome,
-                        tipo,
-                        status,
-                        local,
-                        data_exibicao,
-                        ano,
-                        colocacao,
-                        icone,
-                        descricao
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ");
+    INSERT INTO campeonatos (
+        nome,
+        tipo,
+        status,
+        local,
+        data_inicio,
+        data_fim,
+        colocacao,
+        icone,
+        descricao
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+");
 
-                $stmt->bind_param(
-                    "sssssisss",
-                    $nome,
-                    $tipo,
-                    $status,
-                    $local,
-                    $dataExibicao,
-                    $ano,
-                    $colocacao,
-                    $icone,
-                    $descricao
-                );
+$stmt->bind_param(
+    "sssssssss",
+    $nome,
+    $tipo,
+    $status,
+    $local,
+    $dataInicio,
+    $dataFim,
+    $colocacao,
+    $icone,
+    $descricao
+);
 
                 $stmt->execute();
 
@@ -150,33 +150,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($acao === 'editar' && $id > 0) {
 
                 $stmt = $conn->prepare("
-                    UPDATE campeonatos
-                    SET
-                        nome = ?,
-                        tipo = ?,
-                        status = ?,
-                        local = ?,
-                        data_exibicao = ?,
-                        ano = ?,
-                        colocacao = ?,
-                        icone = ?,
-                        descricao = ?
-                    WHERE id = ?
-                ");
+    UPDATE campeonatos
+    SET
+        nome = ?,
+        tipo = ?,
+        status = ?,
+        local = ?,
+        data_inicio = ?,
+        data_fim = ?,
+        colocacao = ?,
+        icone = ?,
+        descricao = ?
+    WHERE id = ?
+");
 
-                $stmt->bind_param(
-                    "sssssisssi",
-                    $nome,
-                    $tipo,
-                    $status,
-                    $local,
-                    $dataExibicao,
-                    $ano,
-                    $colocacao,
-                    $icone,
-                    $descricao,
-                    $id
-                );
+$stmt->bind_param(
+    "sssssssssi",
+    $nome,
+    $tipo,
+    $status,
+    $local,
+    $dataInicio,
+    $dataFim,
+    $colocacao,
+    $icone,
+    $descricao,
+    $id
+);
 
                 $stmt->execute();
 
@@ -229,7 +229,7 @@ $resultado = $conn->query("
             'disputado',
             'conquista'
         ),
-        ano DESC,
+        data_inicio DESC,
         id DESC
 ");
 
@@ -1117,66 +1117,77 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     <div class="form-grupo">
 
-                        <label>Data</label>
+    <label>Data inicial</label>
 
-                        <input
-                            type="text"
-                            name="data_exibicao"
-                            value="<?= htmlspecialchars($editando['data_exibicao'] ?? '') ?>"
-                        >
+    <input
+        type="date"
+        name="data_inicio"
+        value="<?= htmlspecialchars($editando['data_inicio'] ?? '') ?>"
+        required
+    >
 
-                    </div>
+</div>
 
-                    <div class="form-grupo">
+<div class="form-grupo">
 
-                        <label>Ano</label>
+    <label>Data final</label>
 
-                        <input
-                            type="number"
-                            name="ano"
-                            value="<?= htmlspecialchars($editando['ano'] ?? '') ?>"
-                        >
+    <input
+        type="date"
+        name="data_fim"
+        value="<?= htmlspecialchars($editando['data_fim'] ?? '') ?>"
+    >
 
-                    </div>
+</div>
 
-                    <div class="form-grupo">
+<div class="form-grupo">
 
-                        <label>Colocação</label>
+    <label>Colocação</label>
 
-                        <select name="colocacao">
+    <select name="colocacao">
 
-                            <option value="">
-                                Não informado
-                            </option>
+        <option value="">
+            Não informado
+        </option>
 
-                            <option value="1º lugar"
-                                <?= ($editando['colocacao'] ?? '') === '1º lugar' ? 'selected' : '' ?>>
-                                1º lugar
-                            </option>
+        <option
+            value="1º lugar"
+            <?= ($editando['colocacao'] ?? '') === '1º lugar' ? 'selected' : '' ?>
+        >
+            1º lugar
+        </option>
 
-                            <option value="2º lugar"
-                                <?= ($editando['colocacao'] ?? '') === '2º lugar' ? 'selected' : '' ?>>
-                                2º lugar
-                            </option>
+        <option
+            value="2º lugar"
+            <?= ($editando['colocacao'] ?? '') === '2º lugar' ? 'selected' : '' ?>
+        >
+            2º lugar
+        </option>
 
-                            <option value="3º lugar"
-                                <?= ($editando['colocacao'] ?? '') === '3º lugar' ? 'selected' : '' ?>>
-                                3º lugar
-                            </option>
+        <option
+            value="3º lugar"
+            <?= ($editando['colocacao'] ?? '') === '3º lugar' ? 'selected' : '' ?>
+        >
+            3º lugar
+        </option>
 
-                            <option value="4º lugar"
-                                <?= ($editando['colocacao'] ?? '') === '4º lugar' ? 'selected' : '' ?>>
-                                4º lugar
-                            </option>
+        <option
+            value="4º lugar"
+            <?= ($editando['colocacao'] ?? '') === '4º lugar' ? 'selected' : '' ?>
+        >
+            4º lugar
+        </option>
 
-                            <option value="Participação"
-                                <?= ($editando['colocacao'] ?? '') === 'Participação' ? 'selected' : '' ?>>
-                                Participação
-                            </option>
+        <option
+            value="Participação"
+            <?= ($editando['colocacao'] ?? '') === 'Participação' ? 'selected' : '' ?>
+        >
+            Participação
+        </option>
 
-                        </select>
+    </select>
 
-                    </div>
+</div>
 
                     <div class="form-grupo">
 
